@@ -58,6 +58,8 @@ When the plan is presented, these actions are available:
 
 Cancelling review keeps the mode active. Approval applies only to that proposal and session. New information invalidates the previous proposal; a late response to an invalidated dialog cannot start execution. If creating a clean session is cancelled, planning resumes.
 
+There is no limit on refinement rounds. Continue with ordinary messages or the refinement action; each completed revision must go through `plan_submit` and review again. The normal approval path does not require toggling `/plan` off. In TUI and RPC, if the model ends a turn without a current proposal, the extension requests one recovery continuation: ask unresolved decisions with `plan_ask` or submit the full updated plan with `plan_submit`. Recovery does not run after an unanswered/cancelled question, dismissed review, failed export, aborted turn, or error. If the model still ignores the workflow, a warning keeps planning active and invites another ordinary message instead of automatically looping or approving anything.
+
 ## Commands
 
 | Command | Result |

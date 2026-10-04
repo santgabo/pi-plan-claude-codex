@@ -47,7 +47,7 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
       const stream = createAssistantMessageEventStream();
       const count = requests++;
       const scenario = process.env.PI_PLAN_SCENARIO ?? "plan";
-      const latestUser = [...context.messages].reverse().find((message) => message.role === "user");
+      const latestUser = [...context.messages].reverse().find((message) => message.role === "user" && !JSON.stringify(message.content).includes("Plan mode is still active, but this turn"));
       const userText = latestUser?.role === "user" ? (typeof latestUser.content === "string" ? latestUser.content : latestUser.content.filter((item) => item.type === "text").map((item) => item.text).join("\n")) : "";
       const tool = (name: string, args: JsonObject): ToolCall => ({ type: "toolCall", id: `fixture-${count}`, name, arguments: args });
       let content: TextContent | ToolCall;
@@ -56,6 +56,17 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
         content = latestResult?.role === "toolResult" && latestResult.toolName === "write"
           ? { type: "text", text: "IMPLEMENTED" }
           : tool("write", { path: "implementation.txt", content: "APPROVED\n" });
+      } else if (scenario === "recovery") {
+        const turnMessages = context.messages.slice((latestUser ? context.messages.lastIndexOf(latestUser) : -1) + 1);
+        const recovered = turnMessages.some((message) => message.role === "user" && JSON.stringify(message.content).includes("Plan mode is still active, but this turn"));
+        const answered = turnMessages.some((message) => message.role === "toolResult" && message.toolName === "plan_ask");
+        const submitted = turnMessages.some((message) => message.role === "toolResult" && message.toolName === "plan_submit");
+        if (submitted) content = { type: "text", text: "Plan ready for review." };
+        else if (!recovered) content = { type: "text", text: "Here is the updated approach. Use /plan off to implement it." };
+        else if (!answered) content = tool("plan_ask", { questions: [{ question: "Keep the revised scope small?" }] });
+        else content = tool("plan_submit", { title: "Revised plan", markdown: FIXTURE_PLAN });
+      } else if (scenario === "text-only") {
+        content = { type: "text", text: "A prose-only planning response." };
       } else if (scenario === "nested") {
         content = count === 0 ? tool("fixture_nested", {}) : { type: "text", text: "NESTED_BLOCKED" };
       } else if (scenario === "blocked") {
@@ -64,7 +75,7 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
         content = getCurrentTools(context.messages).some((item) => item.name === "plan_ask")
           ? tool("plan_ask", { questions: [{ question: "Should we include a simplification improvement?", options: [{ label: "Yes", description: "Reduces complexity without changing the goal", recommended: true }, { label: "No", description: "Keeps the original scope" }] }] })
           : { type: "text", text: "PENDING QUESTION: Should we include a simplification improvement?" };
-      } else if (scenario === "question" && count === 1) {
+      } else if (scenario === "question") {
         content = { type: "text", text: "ANSWER RECEIVED" };
       } else if (scenario === "inspect") {
         content = count === 0 ? tool("plan_inspect", { operation: "status" }) : { type: "text", text: "INSPECTED" };
