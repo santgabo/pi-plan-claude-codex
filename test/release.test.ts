@@ -6,6 +6,15 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 import { publicationRequired } from "../scripts/npm-release.ts";
 
+test("release version matches every README and changelog shipped to npm", async () => {
+  const manifest: unknown = JSON.parse(await readFile(resolve("package.json"), "utf8"));
+  assert.ok(typeof manifest === "object" && manifest !== null && "version" in manifest && typeof manifest.version === "string");
+  for (const path of ["README.md", ...["es", "fr", "pt", "ja", "zh-CN"].map((language) => `docs/README.${language}.md`)]) {
+    assert.ok((await readFile(resolve(path), "utf8")).includes(`\`${manifest.version}\``), path);
+  }
+  assert.ok((await readFile(resolve("docs/CHANGELOG.md"), "utf8")).includes(`## ${manifest.version}`));
+});
+
 const version = "0.1.1";
 const missing = JSON.stringify({ error: { code: "E404", summary: `No match found for version ${version}` } });
 

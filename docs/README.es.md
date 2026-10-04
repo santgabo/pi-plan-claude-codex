@@ -2,7 +2,7 @@
 
 > 🌐 Disponible en: [English](../README.md) | [Français](README.fr.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md).
 
-Extensión TypeScript que añade planificación conversacional a **Pi Agent 1.0.1**: investigar el proyecto, aclarar decisiones, proponer mejoras útiles y presentar un plan antes de implementar. Paquete `pi-plan-claude-codex`, versión `0.1.0`.
+Extensión TypeScript que añade planificación conversacional a **Pi Agent 1.0.1**: investigar el proyecto, aclarar decisiones, proponer mejoras útiles y presentar un plan antes de implementar. Paquete `pi-plan-claude-codex`, versión `0.1.1`.
 
 El workflow toma como referencia la [planificación de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) y la [revisión y aprobación de planes de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). La implementación usa las APIs públicas y los documentos de la instalación local de Pi 1.0.1; otras versiones requieren volver a comprobar esos contratos.
 
@@ -136,4 +136,10 @@ Estas pruebas verifican los mecanismos y el protocolo. No constituyen una evalua
 
 GitHub Actions ejecuta `npm run check`, toda la suite de `npm test` y `npm pack --dry-run --ignore-scripts` en pull requests, pushes a `main` y ejecuciones manuales. El job usa Ubuntu 24.04, Node `24.x` y Python `3.12`, e incluye ambos modos de terminal y las pruebas de instalación del paquete.
 
-Pi `1.0.1`, sus paquetes internos y TypeScript `5.9.3` se instalan desde un [proyecto privado de herramientas de CI](../.github/ci/README.md) separado, con un lockfile versionado. El workflow usa allí `npm ci --ignore-scripts`, sin instalar el paquete raíz, por lo que las `peerDependencies` del host se mantienen intactas. La instalación de dependencias requiere acceso al registro npm; las pruebas utilizan fixtures deterministas offline y un registro local de pruebas. No se necesitan credenciales de modelos ni se publican paquetes automáticamente.
+Pi `1.0.1`, sus paquetes internos y TypeScript `5.9.3` se instalan desde un [proyecto privado de herramientas de CI](../.github/ci/README.md) separado, con un lockfile versionado. El workflow usa allí `npm ci --ignore-scripts`, sin instalar el paquete raíz, por lo que las `peerDependencies` del host se mantienen intactas. La instalación de dependencias requiere acceso al registro npm; las pruebas utilizan fixtures deterministas offline y un registro local de pruebas. La validación no utiliza credenciales de modelos.
+
+### Entrega continua
+
+`.github/workflows/cd.yml` publica en npm mediante OIDC solo cuando `CI` termina correctamente para un push a `main` de este repositorio. Utiliza el SHA exacto validado por CI, serializa las publicaciones sin cancelar una release en curso y omite las versiones ya publicadas. Los errores del registro hacen fallar el job, en lugar de interpretarse como una versión ausente. No publican las PRs, los forks, las ejecuciones manuales de CI ni los CI fallidos.
+
+En npm hay que configurar el Trusted Publisher con usuario `santgabo`, repositorio `pi-plan-claude-codex`, archivo de workflow **`cd.yml`**, environment vacío y publicación directa con `npm publish` habilitada. No se guarda un token de publicación en GitHub. Las versiones se incrementan deliberadamente, no en cada push. Consulta la [guía de releases](RELEASING.md) y el [changelog](CHANGELOG.md), ambos en inglés, para configurar, validar y comprobar las publicaciones.
