@@ -4,7 +4,7 @@ import { getMarkdownTheme, truncateHead, type ExtensionAPI, type ExtensionComman
 import { Markdown } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { allowsTool, gitArguments, planningTools } from "./policy.ts";
-import { executionPrompt, WORKFLOW } from "./prompt.ts";
+import { executionPrompt, RECOVER_WORKFLOW, WORKFLOW } from "./prompt.ts";
 import { emptyState, invalidateProposal, isState, PLAN_TOOLS, restoreState, STATE_TYPE, type PlanState, type Proposal } from "./state.ts";
 import { saveProposal } from "./storage.ts";
 
@@ -49,11 +49,13 @@ export default function planMode(pi: ExtensionAPI): void {
   let epoch = 0;
   let interaction = new AbortController();
   let unanswered = false;
+  let recoveryRequested = false;
   let hasDialogs = false;
   let approval: Approval | undefined;
 
   function cancelInteraction(): void {
     epoch++;
+    recoveryRequested = false;
     approval = undefined;
     interaction.abort();
     interaction = new AbortController();
@@ -384,7 +386,25 @@ export default function planMode(pi: ExtensionAPI): void {
     }
   });
   pi.on("agent_before_settle", async (event, ctx) => {
-    if (event.outcome === "completed" && !event.continue && !ctx.hasPendingMessages() && state.enabled && state.proposal?.review === "pending") await review(ctx, false);
+    if (event.outcome !== "completed" || event.continue || ctx.hasPendingMessages() || !state.enabled || !ctx.hasUI || unanswered) return;
+    if (state.proposal?.review === "pending") {
+      await review(ctx, false);
+      return;
+    }
+    // Held proposals already reached review (or failed export). Never reopen dismissed dialogs.
+    if (state.proposal && state.proposal.review !== "stale") return;
+    // A prose-only answer must not strand planning without a question or a current review.
+    // Pi's boundary continuation adds a model request, not user input or approval.
+    // https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md#agent_start--agent_end--agent_before_settle--agent_settled
+    if (recoveryRequested) {
+      ctx.ui.notify("Plan mode is still active. The model did not submit a current plan. Send feedback to continue planning; execution still requires review approval.", "warning");
+      return;
+    }
+    recoveryRequested = true;
+    return {
+      entries: [{ type: "custom_message", customType: "pi-plan-claude-codex.recover", content: RECOVER_WORKFLOW, display: false }],
+      continue: true,
+    };
   });
   pi.on("tool_call", (event) => {
     if (!state.enabled) {

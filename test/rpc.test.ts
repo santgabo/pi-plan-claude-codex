@@ -376,3 +376,75 @@ test("a cancelled fresh session returns to planning without executing", async ()
     await assert.rejects(readFile(join(client.root, "implementation.txt")));
   });
 });
+
+test("RPC recovers skipped planning tools across repeated refinements until explicit approval", async () => {
+  await fixture("recovery", async (client) => {
+    await client.response({ type: "prompt", message: "Plan the work" });
+    let offset = 0;
+    for (let revision = 1; revision <= 5; revision++) {
+      const question = await client.wait((record) => record.type === "extension_ui_request" && record.method === "input" && record.title === "Keep the revised scope small?", offset);
+      client.answer(question, "Yes");
+      const review = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select", offset);
+      assert.match(review.title ?? "", new RegExp(`Review ${revision}:`));
+      const current = snapshot(await client.response({ type: "get_entries" }));
+      assert.equal(current.enabled, true);
+      assert.equal(current.proposal?.revision, revision);
+      await assert.rejects(readFile(join(client.root, "implementation.txt")));
+      offset = client.records.length;
+      if (revision === 5) {
+        client.answer(review, "Execute in this conversation");
+      } else if (revision % 2 === 1) {
+        client.answer(review, "Refine the plan");
+        const input = await client.wait((record) => record.type === "extension_ui_request" && record.method === "input", offset);
+        client.answer(input, `Refinement ${revision}`);
+      } else {
+        client.answer(review, "Continue planning");
+        await client.wait((record) => record.type === "agent_settled", offset);
+        offset = client.records.length;
+        await client.response({ type: "prompt", message: "Change the validation details" });
+      }
+    }
+    await client.wait((record) => record.type === "message_end" && JSON.stringify(record).includes("IMPLEMENTED"), offset);
+    await client.wait((record) => record.type === "agent_settled", offset);
+    assert.equal(snapshot(await client.response({ type: "get_entries" })).enabled, false);
+    assert.equal(await readFile(join(client.root, "implementation.txt"), "utf8"), "APPROVED\n");
+    assert.equal((await readdir(join(client.root, ".pi/plans"))).length, 5);
+  });
+});
+
+test("planning recovery is bounded and a new message gets its own recovery attempt", async () => {
+  await fixture("text-only", async (client) => {
+    for (const message of ["Plan this", "Improve that plan"]) {
+      const offset = client.records.length;
+      await client.response({ type: "prompt", message });
+      await client.wait((record) => record.type === "agent_settled", offset);
+      const responses = client.records.slice(offset).filter((record) => record.type === "message_end" && JSON.stringify(record).includes("A prose-only planning response."));
+      assert.equal(responses.length, 2, "one initial response and at most one recovery, never an automatic loop");
+      assert.equal(snapshot(await client.response({ type: "get_entries" })).enabled, true);
+      await assert.rejects(readFile(join(client.root, "implementation.txt")));
+    }
+  });
+});
+
+test("cancelling a recovered question stops without another retry or implicit approval", async () => {
+  await fixture("recovery", async (client) => {
+    await client.response({ type: "prompt", message: "Plan this" });
+    const question = await client.wait((record) => record.type === "extension_ui_request" && record.method === "input");
+    client.answer(question);
+    await client.wait((record) => record.type === "agent_settled");
+    const cancelled = snapshot(await client.response({ type: "get_entries" }));
+    assert.equal(cancelled.enabled, true);
+    assert.equal(cancelled.proposal, undefined);
+    assert.equal(client.records.filter((record) => record.type === "tool_execution_start").length, 1);
+    await assert.rejects(readdir(join(client.root, ".pi/plans")));
+    const offset = client.records.length;
+    await client.response({ type: "prompt", message: "Continue, keeping the scope small" });
+    const resumed = await client.wait((record) => record.type === "extension_ui_request" && record.method === "input", offset);
+    client.answer(resumed, "Yes");
+    const review = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select", offset);
+    client.answer(review);
+    await client.wait((record) => record.type === "agent_settled", offset);
+    assert.equal(snapshot(await client.response({ type: "get_entries" })).enabled, true);
+    await assert.rejects(readFile(join(client.root, "implementation.txt")));
+  });
+});

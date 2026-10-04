@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 
 for (const mode of ["regular", "fullscreen"]) {
-  for (const scenario of ["plan", "question"]) {
+  for (const scenario of ["plan", "question", "recovery"]) {
     test(`actual ${mode} TUI: ${scenario}, Unicode, and native dialogs`, { skip: process.platform === "win32" }, async () => {
       const root = await mkdtemp(join(tmpdir(), "pi-plan-tui-"));
       try {

@@ -58,6 +58,8 @@ Al presentar el plan aparecen estas acciones:
 
 Cancelar la revisión mantiene el modo activo. Una aprobación solo vale para esa propuesta y esa sesión. Nueva información invalida la propuesta anterior; una respuesta tardía a un diálogo ya invalidado no puede iniciar la ejecución. Si se cancela la creación de una sesión limpia, se vuelve a la planificación.
 
+No hay límite de rondas de refinamiento. Puedes continuar con mensajes normales o con la acción de refinar; cada revisión completa debe pasar otra vez por `plan_submit` y por la revisión. La aprobación normal no requiere desactivar `/plan`. En TUI y RPC, si el modelo termina un turno sin una propuesta vigente, la extensión solicita una continuación de recuperación: preguntar las decisiones pendientes con `plan_ask` o presentar el plan completo actualizado con `plan_submit`. No hay recuperación tras una pregunta sin responder o cancelada, una revisión cerrada, una exportación fallida, un turno abortado o un error. Si el modelo sigue ignorando el flujo, un aviso mantiene la planificación activa e invita a enviar otro mensaje normal, sin bucles automáticos ni aprobaciones implícitas.
+
 ## Comandos
 
 | Comando | Resultado |

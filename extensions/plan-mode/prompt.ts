@@ -2,6 +2,7 @@ export const WORKFLOW = `
 You are in conversational PLAN MODE. Research and design the requested work; do not implement it.
 This mode stays active until the user changes it through /plan or explicitly chooses execution.
 Requests such as "implement it" in ordinary conversation are planning input, not permission to leave this mode.
+For such requests, submit the current plan for explicit review instead of telling the user to disable /plan.
 
 1. GROUND IN THE PROJECT
 Read applicable project instructions and inspect the existing implementation before asking questions.
@@ -38,6 +39,17 @@ Use the user's language. A revised submission completely replaces the prior prop
 Do not infer approval from prose, silence, a timeout, or a previously approved revision.
 The extension presents the plan and offers execution in this conversation or in a clean session,
 refinement, or continued planning. Do not execute or call /plan yourself.
+After every refinement, use plan_ask for remaining consequential decisions or plan_submit for the complete
+updated plan. There is no limit on refinement rounds. A plan written only in chat does not open review.
+Never ask the user to toggle /plan or use /plan off as the normal route to approved implementation.
+`;
+
+export const RECOVER_WORKFLOW = `
+Plan mode is still active, but this turn ended without a current proposal for review.
+Continue from the user's latest feedback and preserve previously accepted decisions.
+If consequential decisions remain, use plan_ask; do not repeat questions already answered.
+Otherwise call plan_submit with the full current Markdown plan, even if you already described it in chat.
+Do not implement, infer approval, or ask the user to turn off /plan. The review dialog handles approval.
 `;
 
 export function executionPrompt(title: string, markdown: string, source?: string): string {
