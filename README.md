@@ -30,7 +30,13 @@ Now describe your goal in a regular message, for example: “I want to add catal
 
 Installation registers the package in Pi's personal configuration. It loads automatically on subsequent launches, making `/plan` available. Activate the mode with that command; no paths or flags are needed at startup. `/plan <request>` is also supported as a shortcut.
 
-**Distribution:** this version is not yet published to the public npm registry. The installation command above is the intended distribution workflow and will be available once it is published.
+To install a local checkout, including before the first npm release, run:
+
+```sh
+pi install /absolute/path/to/pi-plan-claude-codex
+```
+
+Then use the same `pi` → `/plan` workflow.
 
 Requires Pi 1.0.1 and Node.js `>=22.19.0`. Pi loads TypeScript directly without a prior compilation step and provides the dependencies declared in `peerDependencies`.
 

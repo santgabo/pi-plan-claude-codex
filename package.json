@@ -2,10 +2,16 @@
   "name": "pi-plan-claude-codex",
   "version": "0.1.0",
   "description": "Conversational plan mode with questions, review, and explicit execution for Pi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santgabo/pi-plan-claude-codex.git"
+  },
+  "homepage": "https://github.com/santgabo/pi-plan-claude-codex#readme",
+  "bugs": { "url": "https://github.com/santgabo/pi-plan-claude-codex/issues" },
   "type": "module",
   "keywords": ["pi-package"],
   "engines": { "node": ">=22.19.0" },
-  "files": ["extensions", "README.md"],
+  "files": ["extensions", "README.md", "README.es.md"],
   "pi": { "extensions": ["./extensions/plan-mode/index.ts"] },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

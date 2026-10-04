@@ -30,7 +30,13 @@ Ahora describe tu objetivo como un mensaje normal, por ejemplo: «Quiero agregar
 
 La instalación registra el paquete en la configuración personal de Pi. En los siguientes arranques se carga automáticamente y `/plan` queda disponible. El modo se activa con ese comando; el usuario no necesita pasar rutas ni flags al arrancar. También admite `/plan <petición>` como atajo.
 
-**Distribución:** esta versión todavía no está publicada en el registro público de npm. El comando de instalación anterior es el flujo de distribución previsto y estará disponible al publicarla.
+Para instalar el repositorio local, incluso antes de la primera publicación en npm, ejecuta:
+
+```sh
+pi install /ruta/absoluta/pi-plan-claude-codex
+```
+
+Después usa el mismo flujo `pi` → `/plan`.
 
 Requiere Pi 1.0.1 y Node.js `>=22.19.0`. Pi carga el TypeScript sin compilarlo previamente y proporciona las dependencias declaradas en `peerDependencies`.
 

@@ -306,6 +306,7 @@ test("RPC refinement creates a new proposal and preserves previous Markdown", as
   await fixture("plan", async (client) => {
     await client.response({ type: "prompt", message: "Plan this" });
     const first = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select");
+    assert.ok(first.options?.includes("Refine the plan"), "the refinement action must be offered before selecting it");
     client.answer(first, "Refine the plan");
     const input = await client.wait((record) => record.type === "extension_ui_request" && record.method === "input");
     const offset = client.records.length;
