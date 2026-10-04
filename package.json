@@ -11,7 +11,7 @@
   "type": "module",
   "keywords": ["pi-package"],
   "engines": { "node": ">=22.19.0" },
-  "files": ["extensions", "README.md", "README.es.md"],
+  "files": ["extensions", "README.md", "docs/"],
   "pi": { "extensions": ["./extensions/plan-mode/index.ts"] },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

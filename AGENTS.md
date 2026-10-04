@@ -32,6 +32,6 @@ History includes `feat: add conversational plan mode extension`. Continue with f
 
 ## Configuration & Agent Instructions
 
-Write all newly generated documentation in English unless the user explicitly requests another language. Keep `README.es.md` as the explicitly requested Spanish localization of `README.md`.
+Write all newly generated documentation in English unless the user explicitly requests another language. Keep `docs/README.es.md` as the explicitly requested Spanish localization of `README.md`. Translations live under `docs/` (`docs/README.<lang>.md`) with `README.md` as source; keep the language switcher links in sync.
 
 Verify public APIs against the target Pi installation before changes. Keep host packages in `peerDependencies`, preserve explicit execution approval, and keep stdout clean in JSON/RPC. Interpret “Jeff” as “Jev” in user requests.

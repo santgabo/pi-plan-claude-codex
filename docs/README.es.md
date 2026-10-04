@@ -1,6 +1,6 @@
 # Modo de planificación para Pi
 
-> English version: [README.md](README.md).
+> 🌐 Disponible en: [English](../README.md) | [Français](README.fr.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md).
 
 Extensión TypeScript que añade planificación conversacional a **Pi Agent 1.0.1**: investigar el proyecto, aclarar decisiones, proponer mejoras útiles y presentar un plan antes de implementar. Paquete `pi-plan-claude-codex`, versión `0.1.0`.
 
