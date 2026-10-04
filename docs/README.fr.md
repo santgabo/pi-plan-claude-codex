@@ -2,7 +2,7 @@
 
 > 🌐 Disponible en : [English](../README.md) | [Español](README.es.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md).
 
-Extension TypeScript qui ajoute la planification conversationnelle à **Pi Agent 1.0.1** : explorer un projet, clarifier les décisions, suggérer des améliorations utiles et présenter un plan avant l'implémentation. Paquet : `pi-plan-claude-codex`, version `0.1.0`.
+Extension TypeScript qui ajoute la planification conversationnelle à **Pi Agent 1.0.1** : explorer un projet, clarifier les décisions, suggérer des améliorations utiles et présenter un plan avant l'implémentation. Paquet : `pi-plan-claude-codex`, version `0.1.1`.
 
 Le workflow s'inspire de la [planification de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) et de la [revue et approbation de plans de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). L'implémentation utilise les API publiques et la documentation d'une installation locale de Pi 1.0.1 ; revérifiez ces contrats avant d'utiliser d'autres versions.
 

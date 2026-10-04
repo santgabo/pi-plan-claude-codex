@@ -27,6 +27,14 @@ npm pack --dry-run --ignore-scripts
 
 This verifies the same tool installation and validation commands locally; it does not replace a workflow run on Ubuntu in GitHub Actions.
 
+## CI and CD boundaries
+
+`.github/workflows/ci.yml` performs validation without npm publish credentials or OIDC write permission. `.github/workflows/cd.yml` is a separate `workflow_run` consumer, restricted to successful push runs of `CI` on this repository's `main`. It checks out the upstream run's `head_sha`, rather than the current branch tip, and has job-scoped `contents: read` and `id-token: write` permissions.
+
+CD installs npm `11.16.0` for Trusted Publishing; it does not install this tooling project or the root package's peers. `scripts/npm-release.ts` uses npm's JSON version lookup to skip existing versions. Only an `E404` explicitly identifying the missing requested version allows publication; other errors fail the job. The release lookup tests use an offline fake npm executable and do not use registry credentials.
+
+See [the release guide](../../docs/RELEASING.md) for the exact npm publisher fields and the release procedure. npm trusts **`cd.yml`**, not `ci.yml`. A locally passing suite or successful GitHub CI run alone does not prove that npm accepted a release.
+
 ## Updating tools
 
 Update the direct dependency versions and matching Pi overrides together. Regenerate the lockfile from this directory, without reusing an existing `node_modules` tree:

@@ -2,7 +2,7 @@
 
 > 🌐 Available in: [Español](docs/README.es.md) | [Français](docs/README.fr.md) | [Português](docs/README.pt.md) | [日本語](docs/README.ja.md) | [简体中文](docs/README.zh-CN.md).
 
-A TypeScript extension that adds conversational planning to **Pi Agent 1.0.1**: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.0`.
+A TypeScript extension that adds conversational planning to **Pi Agent 1.0.1**: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.1`.
 
 The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation uses the public APIs and documentation from a local Pi 1.0.1 installation; recheck those contracts before using other versions.
 
@@ -136,4 +136,10 @@ These tests verify mechanisms and protocol behavior. They are not a conversation
 
 GitHub Actions runs `npm run check`, the complete `npm test` suite, and `npm pack --dry-run --ignore-scripts` for pull requests, pushes to `main`, and manual runs. The job uses Ubuntu 24.04, Node `24.x`, and Python `3.12`, including both terminal modes and package-installation tests.
 
-Pi `1.0.1`, its internal packages, and TypeScript `5.9.3` are installed from a separate private [CI tooling project](.github/ci/README.md) with a committed lockfile. The workflow uses `npm ci --ignore-scripts` there, not an installation of the root package, so host `peerDependencies` remain unchanged. Dependency installation needs npm registry access; the tests use deterministic offline fixtures and a local test registry. No model credentials or automatic package publication are involved.
+Pi `1.0.1`, its internal packages, and TypeScript `5.9.3` are installed from a separate private [CI tooling project](.github/ci/README.md) with a committed lockfile. The workflow uses `npm ci --ignore-scripts` there, not an installation of the root package, so host `peerDependencies` remain unchanged. Dependency installation needs npm registry access; the tests use deterministic offline fixtures and a local test registry. No model credentials are used during validation.
+
+### Continuous delivery
+
+`.github/workflows/cd.yml` publishes to npm through OIDC only after `CI` succeeds for a push to `main` in this repository. It checks out the exact SHA validated by CI, serializes publication without cancelling an active release, and skips versions already published. Registry errors fail the job instead of being interpreted as a missing version. PRs, forks, manual CI runs, and failed CI runs cannot publish.
+
+Maintainers must configure the npm Trusted Publisher with user `santgabo`, repository `pi-plan-claude-codex`, workflow filename **`cd.yml`**, no environment, and direct `npm publish` enabled. No npm publish token is stored in GitHub. Versions are bumped deliberately, not on every push. See the [release guide](docs/RELEASING.md) and [changelog](docs/CHANGELOG.md) for configuration, validation, and release verification.
