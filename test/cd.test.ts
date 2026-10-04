@@ -7,7 +7,7 @@ const cd = await readFile(new URL("../.github/workflows/cd.yml", import.meta.url
 const ci = await readFile(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
 const repository = "santgabo/pi-plan-claude-codex";
 const trusted = {
-  repository,
+  repository, ref: "refs/heads/main",
   event: { workflow_run: { conclusion: "success", event: "push", head_branch: "main", head_repository: { full_name: repository }, head_sha: "a".repeat(40) } },
 };
 
@@ -31,11 +31,12 @@ test("CD publishes only after successful push CI on this repository's main branc
     github.event.workflow_run.event = event;
     assert.equal(allowed(github), false, event);
   }
-  for (const target of ["repository", "fork", "branch"]) {
+  for (const target of ["repository", "fork", "branch", "ref"]) {
     const github = structuredClone(trusted);
     if (target === "repository") github.repository = "another/repository";
     if (target === "fork") github.event.workflow_run.head_repository.full_name = "attacker/fork";
     if (target === "branch") github.event.workflow_run.head_branch = "feature";
+    if (target === "ref") github.ref = "refs/heads/feature";
     assert.equal(allowed(github), false, target);
   }
 });

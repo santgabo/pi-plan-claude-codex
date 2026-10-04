@@ -19,6 +19,7 @@ jobs:
     # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run
     if: >-
       github.repository == 'santgabo/pi-plan-claude-codex' &&
+      github.ref == 'refs/heads/main' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'main' &&
