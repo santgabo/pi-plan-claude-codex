@@ -38,7 +38,7 @@ export function findHost() {
     const info = JSON.parse(readFileSync(file, "utf8"));
     if (info.name === "@earendil-works/pi-coding-agent") return { root, version: info.version };
   }
-  throw new Error("No se encontró Pi. Instálalo o define PI_PLAN_HOST_ROOT con la raíz de su paquete.");
+  throw new Error("Could not find Pi. Install it or set PI_PLAN_HOST_ROOT to its package root.");
 }
 
 export function hostRequire(root) {
@@ -54,5 +54,5 @@ export function hostModule(root, name, kind = "import") {
     const entry = kind === "types" ? info.types : info.exports?.["."]?.import ?? info.main;
     if (typeof entry === "string") return join(directory, entry);
   }
-  throw new Error(`No se encontró ${name} (${kind}) en la instalación de Pi.`);
+  throw new Error(`Could not find ${name} (${kind}) in the Pi installation.`);
 }

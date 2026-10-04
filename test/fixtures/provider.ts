@@ -3,20 +3,20 @@ import { createAssistantMessageEventStream, getCurrentSystemPrompt, getCurrentTo
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-export const FIXTURE_PLAN = `# Plan de ejemplo
+export const FIXTURE_PLAN = `# Example plan
 
-## Objetivo
-Crear implementation.txt con el contenido aprobado.
+## Goal
+Create implementation.txt with the approved content.
 
-## Decisiones
-Mantener el alcance pequeño y validar el resultado con lectura.
+## Decisions
+Keep the scope small and verify the result by reading it.
 
-## Implementación
-1. Escribir implementation.txt.
-2. Comprobar su contenido.
+## Implementation
+1. Write implementation.txt.
+2. Check its contents.
 
-## Pruebas y supuestos
-El archivo debe contener APPROVED. No requiere servicios externos.`;
+## Tests and assumptions
+The file must contain APPROVED. No external services are required.`;
 
 export default function fixtureProvider(pi: ExtensionAPI): void {
   let requests = 0;
@@ -62,14 +62,14 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
         content = count === 0 ? tool("write", { path: "unauthorized.txt", content: "BAD" }) : { type: "text", text: "BLOCKED" };
       } else if (scenario === "question" && count === 0) {
         content = getCurrentTools(context.messages).some((item) => item.name === "plan_ask")
-          ? tool("plan_ask", { questions: [{ question: "¿Incluimos una mejora de simplicidad?", options: [{ label: "Sí", description: "Reduce complejidad sin cambiar el objetivo", recommended: true }, { label: "No", description: "Conserva el alcance original" }] }] })
-          : { type: "text", text: "PREGUNTA PENDIENTE: ¿Incluimos una mejora de simplicidad?" };
+          ? tool("plan_ask", { questions: [{ question: "Should we include a simplification improvement?", options: [{ label: "Yes", description: "Reduces complexity without changing the goal", recommended: true }, { label: "No", description: "Keeps the original scope" }] }] })
+          : { type: "text", text: "PENDING QUESTION: Should we include a simplification improvement?" };
       } else if (scenario === "question" && count === 1) {
-        content = { type: "text", text: "RESPUESTA RECIBIDA" };
+        content = { type: "text", text: "ANSWER RECEIVED" };
       } else if (scenario === "inspect") {
         content = count === 0 ? tool("plan_inspect", { operation: "status" }) : { type: "text", text: "INSPECTED" };
-      } else if (count === 0 || userText.startsWith("Refina")) {
-        content = tool("plan_submit", { title: userText.startsWith("Refina") ? "Plan refinado" : "Plan de ejemplo", markdown: FIXTURE_PLAN + (userText.startsWith("Refina") ? "\n\nMejora aceptada: conservar un alcance pequeño." : "") });
+      } else if (count === 0 || userText.startsWith("Refine")) {
+        content = tool("plan_submit", { title: userText.startsWith("Refine") ? "Refined plan" : "Example plan", markdown: FIXTURE_PLAN + (userText.startsWith("Refine") ? "\n\nAccepted improvement: keep the scope small." : "") });
       } else {
         content = { type: "text", text: getCurrentSystemPrompt(context.messages).includes("PLAN MODE") ? FIXTURE_PLAN : "DONE" };
       }

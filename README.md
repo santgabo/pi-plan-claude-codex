@@ -1,112 +1,114 @@
-# Plan mode para Pi
+# Plan mode for Pi
 
-Extensión TypeScript que añade planificación conversacional a **Pi Agent 1.0.1**: investigar el proyecto, aclarar decisiones, proponer mejoras útiles y presentar un plan antes de implementar. Paquete `pi-plan-claude-codex`, versión `0.1.0`.
+> Versión en español: [README.es.md](README.es.md).
 
-El workflow toma como referencia la [planificación de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) y la [revisión y aprobación de planes de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). La implementación usa las APIs públicas y los documentos de la instalación local de Pi 1.0.1; otras versiones requieren volver a comprobar esos contratos.
+A TypeScript extension that adds conversational planning to **Pi Agent 1.0.1**: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.0`.
 
-## Instalar y usar
+The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation uses the public APIs and documentation from a local Pi 1.0.1 installation; recheck those contracts before using other versions.
 
-Instala el paquete una vez:
+## Install and use
+
+Install the package once:
 
 ```sh
 pi install npm:pi-plan-claude-codex
 ```
 
-Después entra a Pi como siempre, desde cualquier proyecto:
+Then launch Pi as usual, from any project:
 
 ```sh
 pi
 ```
 
-Dentro de la conversación, activa el modo:
+Activate the mode in the conversation:
 
 ```text
 /plan
 ```
 
-Ahora describe tu objetivo como un mensaje normal, por ejemplo: «Quiero agregar búsqueda al catálogo; investiga cómo funciona y propón mejoras antes de decidir».
+Now describe your goal in a regular message, for example: “I want to add catalog search; investigate how it works and suggest improvements before deciding.”
 
-La instalación registra el paquete en la configuración personal de Pi. En los siguientes arranques se carga automáticamente y `/plan` queda disponible. El modo se activa con ese comando; el usuario no necesita pasar rutas ni flags al arrancar. También admite `/plan <petición>` como atajo.
+Installation registers the package in Pi's personal configuration. It loads automatically on subsequent launches, making `/plan` available. Activate the mode with that command; no paths or flags are needed at startup. `/plan <request>` is also supported as a shortcut.
 
-**Distribución:** esta versión todavía no está publicada en el registro público de npm. El comando de instalación anterior es el flujo de distribución previsto y estará disponible al publicarla.
+**Distribution:** this version is not yet published to the public npm registry. The installation command above is the intended distribution workflow and will be available once it is published.
 
-Requiere Pi 1.0.1 y Node.js `>=22.19.0`. Pi carga el TypeScript sin compilarlo previamente y proporciona las dependencias declaradas en `peerDependencies`.
+Requires Pi 1.0.1 and Node.js `>=22.19.0`. Pi loads TypeScript directly without a prior compilation step and provides the dependencies declared in `peerDependencies`.
 
 ## Workflow
 
-1. **Investigar.** Lee las instrucciones del proyecto y explora su implementación. Busca primero los datos que pueda descubrir por sí mismo.
-2. **Conversar.** Aclara objetivo, alcance, restricciones y criterios de éxito. Propone mejoras de experiencia, simplicidad o comportamiento, explica sus consecuencias y pregunta si deben incluirse.
-3. **Cerrar decisiones.** Resuelve interfaces, enfoque, errores, compatibilidad y validación. La entrevista se adapta a la tarea: normalmente una decisión por pregunta, hasta tres relacionadas, sin número mínimo de rondas ni preguntas de relleno.
-4. **Revisar.** Presenta un plan Markdown completo con decisiones aceptadas, pasos verificables, pruebas y supuestos. El usuario elige qué hacer.
+1. **Investigate.** Read project instructions and explore the implementation. First look for facts the agent can discover on its own.
+2. **Discuss.** Clarify the goal, scope, constraints, and success criteria. Suggest useful UX, simplicity, or behavioral improvements, explain their tradeoffs, and ask whether to include them.
+3. **Resolve decisions.** Settle interfaces, approach, errors, compatibility, and validation. The interview adapts to the task: typically one decision per question, up to three related questions, with no minimum number of rounds or filler questions.
+4. **Review.** Present a complete Markdown plan with accepted decisions, verifiable steps, tests, and assumptions. The user chooses what to do.
 
-Las preguntas permiten opciones con consecuencias y recomendación, además de respuesta libre. Cancelarlas deja la decisión sin responder y detiene el turno. El modelo recibe instrucciones para conservar las decisiones previas y no ampliar el alcance sin aceptación. La calidad de la entrevista y la completitud del plan dependen también del modelo elegido.
+Questions can offer options with tradeoffs and a recommendation, as well as a free-form answer. Cancelling leaves the decision unanswered and stops the turn. The model is instructed to preserve prior decisions and not expand scope without approval. Interview quality and plan completeness also depend on the selected model.
 
-Al presentar el plan aparecen estas acciones:
+When the plan is presented, these actions are available:
 
-- **Seguir planificando:** conserva la propuesta pendiente y las restricciones de lectura.
-- **Refinar el plan:** pide comentarios y genera una nueva revisión.
-- **Ejecutar en esta conversación:** restaura las herramientas anteriores e inicia la implementación con el plan aprobado.
-- **Ejecutar en una sesión limpia:** crea una sesión sin el historial de la entrevista y entrega el plan completo, su procedencia, el modelo, el nivel de razonamiento y las herramientas anteriores.
+- **Continue planning:** keep the pending proposal and read-only restrictions.
+- **Refine the plan:** request feedback and generate a new revision.
+- **Execute in this conversation:** restore the previous tools and begin implementation using the approved plan.
+- **Execute in a clean session:** create a session without the interview history and pass along the full plan, its provenance, the model, reasoning level, and the previous tools.
 
-Cancelar la revisión mantiene el modo activo. Una aprobación solo vale para esa propuesta y esa sesión. Nueva información invalida la propuesta anterior; una respuesta tardía a un diálogo ya invalidado no puede iniciar la ejecución. Si se cancela la creación de una sesión limpia, se vuelve a la planificación.
+Cancelling review keeps the mode active. Approval applies only to that proposal and session. New information invalidates the previous proposal; a late response to an invalidated dialog cannot start execution. If creating a clean session is cancelled, planning resumes.
 
-## Comandos
+## Commands
 
-| Comando | Resultado |
+| Command | Result |
 | --- | --- |
-| `/plan` | Activa o desactiva el modo. |
-| `/plan <petición>` | Activa el modo y empieza a planificar esa petición. |
-| `/plan on` | Activa sin enviar una petición al modelo. |
-| `/plan off` | Desactiva y restaura las herramientas previas. |
-| `/plan status` | Muestra modo, revisión, estado y archivo Markdown. |
-| `/plan review` | Vuelve a mostrar la propuesta y el selector; reintenta una exportación fallida. |
-| `/plan execute` | Abre el mismo selector de revisión; requiere elegir una acción. |
-| `/plan refine [comentarios]` | Refina la propuesta con comentarios o abre una pregunta para escribirlos. |
-| `--plan` | Inicia en modo planificación si la rama no tiene un estado guardado. |
+| `/plan` | Toggle plan mode. |
+| `/plan <request>` | Enable the mode and start planning that request. |
+| `/plan on` | Enable without sending a request to the model. |
+| `/plan off` | Disable the mode and restore the previous tools. |
+| `/plan status` | Show the mode, revision, status, and Markdown file. |
+| `/plan review` | Show the proposal and selector again; retry a failed export. |
+| `/plan execute` | Open the same review selector; an action must be chosen. |
+| `/plan refine [comments]` | Refine the proposal with comments or open a prompt to enter them. |
+| `--plan` | Start in plan mode if the branch has no saved state. |
 
-Los cambios de modo se realizan con el agente en reposo. Escribir «implementa el plan» como un mensaje ordinario mantiene la planificación: la transición se hace mediante los comandos o la selección explícita de ejecución. Desactivar con `/plan off` termina las restricciones del modo, sin iniciar automáticamente una implementación.
+Mode changes happen while the agent is idle. Writing “implement the plan” as an ordinary message keeps the agent in planning mode: transition through the commands or the explicit execution choice. `/plan off` ends the mode's restrictions without automatically starting implementation.
 
-## Exploración permitida
+## Allowed exploration
 
-Mientras está activo, se habilitan `read`, `grep`, `find`, `ls` y tres herramientas propias:
+While active, `read`, `grep`, `find`, `ls`, and three built-in tools are enabled:
 
-| Herramienta | Función |
+| Tool | Purpose |
 | --- | --- |
-| `plan_ask` | Preguntas con opciones o respuesta libre. |
-| `plan_submit` | Guarda y presenta una propuesta; no aprueba su ejecución. |
-| `plan_inspect` | Consultas Git fijas: `status`, `diff`, `log` y `show`. |
+| `plan_ask` | Ask questions with options or a free-form answer. |
+| `plan_submit` | Save and present a proposal; does not approve execution. |
+| `plan_inspect` | Fixed Git queries: `status`, `diff`, `log`, and `show`. |
 
-Las herramientas externas previamente activas pueden seguir disponibles si declaran `readOnlyHint: true` y no declaran `destructiveHint: true`. Se bloquean las herramientas desconocidas o mutantes, incluidas las llamadas anidadas, además de `bash`, `powershell`, `codemode`, `write`, `edit` y los comandos del usuario `!`/`!!`.
+Previously active external tools may remain available if they declare `readOnlyHint: true` and do not declare `destructiveHint: true`. Unknown or mutating tools are blocked, including nested calls, as are `bash`, `powershell`, `codemode`, `write`, `edit`, and the user's `!`/`!!` commands.
 
-`plan_inspect` usa argumentos directos, sin shell, con operaciones fijas, referencias validadas, opciones que deshabilitan diferencias externas y textconv, límite de diez segundos y salida acotada. Los tests, builds, scripts e instalaciones deben esperar a la ejecución aprobada. Si falta evidencia que requiere esas operaciones, el plan debe reconocerlo.
+`plan_inspect` uses direct arguments, no shell, fixed operations, validated refs, options that disable external diff and textconv, a ten-second timeout, and bounded output. Tests, builds, scripts, and installations must wait for approved execution. If the plan requires evidence that depends on those operations, it must acknowledge that limitation.
 
-Esto es una política dentro de Pi, no una sandbox del sistema operativo. Las anotaciones de herramientas externas son declaraciones de sus autores; otras extensiones ejecutan código con los permisos de Pi. Las escrituras propias del modo se limitan a snapshots de sesión y exportaciones de propuestas.
+This is a policy within Pi, not an operating-system sandbox. Annotations on external tools are declarations made by their authors; other extensions run code with Pi's permissions. The mode's own writes are limited to session snapshots and proposal exports.
 
-## Estado y archivos
+## State and files
 
-El estado y la última propuesta se guardan como entradas personalizadas en la **rama actual de la sesión**. Se restauran al reanudar, recargar, cambiar de sesión o navegar el árbol. Una rama nueva solo hereda los snapshots presentes en sus antecesores.
+State and the latest proposal are saved as custom entries on the **current session branch**. They are restored when resuming, reloading, switching sessions, or navigating the tree. A new branch inherits only snapshots present in its ancestors.
 
-Cada propuesta crea un archivo independiente `.pi/plans/<uuid>.md` en el proyecto, sin sobrescribir revisiones anteriores. La sesión es la fuente de verdad; editar el Markdown exportado no modifica ni aprueba automáticamente la propuesta. Usa `/plan refine` para incorporar cambios. `.pi/plans/` está excluido de Git en este repositorio.
+Each proposal creates a separate `.pi/plans/<uuid>.md` file in the project without overwriting previous revisions. The session is the source of truth; editing the exported Markdown does not modify or automatically approve the proposal. Use `/plan refine` to incorporate changes. `.pi/plans/` is excluded from Git in this repository.
 
-Si falla la exportación, la propuesta permanece en la sesión, no se abre el selector de ejecución y `/plan review` permite reintentar. Los directorios `.pi` y `plans` no pueden ser enlaces simbólicos. Los archivos se crean de forma exclusiva con permisos `0600` en sistemas que los soportan. `--no-session` conserva estado solo durante el proceso, mientras los archivos Markdown siguen en disco.
+If export fails, the proposal remains in the session, the execution selector is not opened, and `/plan review` can retry. The `.pi` and `plans` directories cannot be symbolic links. Files are created exclusively with `0600` permissions on supported systems. `--no-session` keeps state only for the process, while Markdown files remain on disk.
 
-## TUI, RPC, print y JSON
+## TUI, RPC, print, and JSON
 
-En TUI se usan los diálogos nativos y un indicador del modo. Se comprobaron `regular` y `fullscreen`, Unicode y resize a terminal estrecha.
+The TUI uses native dialogs and a mode indicator. `regular` and `fullscreen`, Unicode, and resizing to a narrow terminal have been tested.
 
-En RPC se usan las peticiones `extension_ui_request` nativas (`select` e `input`), widgets de texto y notificaciones. El cliente debe mostrar la propuesta y contestar los diálogos con `extension_ui_response`, o cancelarlos. No se infieren respuestas ni aprobaciones por timeout. La implementación comienza después de que se cierre el turno de planificación.
+RPC uses native `extension_ui_request` requests (`select` and `input`), text widgets, and notifications. The client must display the proposal and respond to dialogs with `extension_ui_response`, or cancel them. Responses and approvals are never inferred from a timeout. Implementation starts after the planning turn has ended.
 
-Print/text y JSON mantienen las restricciones, sin diálogos ni ejecución automática. Las preguntas pendientes se presentan en la respuesta final; si el plan está completo, se exporta y el modelo debe incluir su Markdown en la respuesta final. JSON/RPC mantienen stdout reservado al protocolo.
+Print/text and JSON preserve the restrictions without dialogs or automatic execution. Pending questions are included in the final response; when the plan is complete, it is exported and the model must include its Markdown in the final response. JSON/RPC keep stdout reserved for the protocol.
 
 ```sh
-pi --plan -p 'Planifica una búsqueda en el catálogo'
-pi --plan --mode json -p 'Planifica una búsqueda en el catálogo'
+pi --plan -p 'Plan a catalog search'
+pi --plan --mode json -p 'Plan a catalog search'
 pi --mode rpc
 ```
 
-## Desarrollo y verificación
+## Development and verification
 
-Para probar el checkout sin publicarlo, instala su ruta con `pi install /ruta/absoluta/pi-plan-claude-codex`; después usa `pi` y `/plan` igual que con el paquete de npm. Para cargarlo solo durante una invocación de desarrollo, usa `pi -e /ruta/absoluta/pi-plan-claude-codex`.
+To test the checkout without publishing it, install its path with `pi install /absolute/path/to/pi-plan-claude-codex`; then use `pi` and `/plan` just as with the npm package. To load it for a single development invocation, use `pi -e /absolute/path/to/pi-plan-claude-codex`.
 
 ```sh
 npm run check
@@ -114,10 +116,10 @@ npm test
 npm pack --dry-run --ignore-scripts
 ```
 
-El checker reutiliza las dependencias de la instalación de Pi. Las pruebas de distribución empaquetan esta extensión, sirven el tarball desde un registro npm local y ejecutan `pi install npm:pi-plan-claude-codex` en un perfil temporal. Después arrancan `pi` sin argumentos y activan `/plan` en terminal real. No modifican la configuración personal del usuario ni descargan dependencias de terceros.
+The checker reuses dependencies from the Pi installation. Distribution tests package the extension, serve the tarball from a local npm registry, and run `pi install npm:pi-plan-claude-codex` in a temporary profile. They then start `pi` without arguments and activate `/plan` in a real terminal. They do not modify the user's personal configuration or download third-party dependencies.
 
-`check` necesita `tsc` en PATH. Puedes especificar `PI_PLAN_HOST_ROOT` (raíz del paquete de Pi) y `PI_PLAN_TSC` (ejecutable del checker). Los tests usan Node con eliminación nativa de tipos; se verificaron con Node `24.18.0`. Las pruebas de terminal Unix necesitan Python 3; se omiten en Windows.
+`check` requires `tsc` on PATH. You can specify `PI_PLAN_HOST_ROOT` (the Pi package root) and `PI_PLAN_TSC` (the checker executable). Tests use Node's native type stripping and were verified with Node `24.18.0`. Unix terminal tests require Python 3 and are skipped on Windows.
 
-La suite comprueba instalación y carga automática, política de herramientas, snapshots de ramas, exportaciones, errores y cancelación, aprobación en ambas sesiones, conservación de modelo/razonamiento, invalidación de diálogos, refinamiento, reload, aislamiento del historial, llamadas anidadas, modos sin UI y terminal real. Utiliza el runtime instalado de Pi con un proveedor determinista sin llamadas a modelos ni credenciales reales. Las fixtures no se incluyen en el paquete distribuible.
+The suite checks installation and automatic loading, tool policy, branch snapshots, exports, errors and cancellation, approval in both sessions, model/reasoning preservation, dialog invalidation, refinement, reload, history isolation, nested calls, non-UI modes, and a real terminal. It uses the installed Pi runtime with a deterministic provider and no model calls or real credentials. Fixtures are not included in the distributable package.
 
-Estas pruebas verifican los mecanismos y el protocolo. No constituyen una evaluación conversacional con un modelo real ni una validación de clientes RPC específicos.
+These tests verify mechanisms and protocol behavior. They are not a conversational evaluation with a real model or validation of specific RPC clients.

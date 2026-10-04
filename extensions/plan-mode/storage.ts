@@ -7,7 +7,7 @@ async function ensureDirectory(path: string): Promise<void> {
   await mkdir(path, { recursive: true });
   const info = await lstat(path);
   if (!info.isDirectory() || info.isSymbolicLink()) {
-    throw new Error(`El directorio de planes no puede ser un enlace simbólico: ${path}`);
+    throw new Error(`The plans directory cannot be a symbolic link: ${path}`);
   }
 }
 

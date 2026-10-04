@@ -21,7 +21,7 @@ test("refuses exports through a symlink outside the project", async () => {
   const outside = await mkdtemp(join(tmpdir(), "pi-plan-outside-"));
   try {
     await symlink(outside, join(root, ".pi"));
-    await assert.rejects(saveProposal(root, "# Plan"), /simbólico/);
+    await assert.rejects(saveProposal(root, "# Plan"), /symbolic link/);
     assert.deepEqual(await readdir(outside), []);
   } finally {
     await rm(root, { recursive: true, force: true });

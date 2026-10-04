@@ -68,8 +68,8 @@ export default function planMode(pi: ExtensionAPI): void {
     const proposal = state.proposal;
     ctx.ui.setStatus("plan-mode", state.enabled ? "⏸ plan" : undefined);
     ctx.ui.setWidget("plan-mode", state.enabled ? [
-      "Plan mode · explorar → conversar → revisar",
-      proposal ? `${proposal.title} · revisión ${proposal.revision} · ${proposal.review}` : "Preguntas y mejoras antes de implementar",
+      "Plan mode · explore → discuss → review",
+      proposal ? `${proposal.title} · revision ${proposal.revision} · ${proposal.review}` : "Questions and improvements before implementation",
       ...(proposal?.file ? [`Markdown: ${proposal.file}`] : []),
     ] : undefined);
   }
@@ -123,16 +123,16 @@ export default function planMode(pi: ExtensionAPI): void {
       return;
     }
     if (!ctx.isIdle()) {
-      ctx.ui.notify("Espera a que termine el turno para cambiar plan mode.", "warning");
+      ctx.ui.notify("Wait for the turn to finish before changing plan mode.", "warning");
       return;
     }
     if (text === "status") {
-      ctx.ui.notify(`${state.enabled ? "Plan mode activo." : "Plan mode desactivado."}${state.proposal ? `\n${state.proposal.title} · revisión ${state.proposal.revision} · ${state.proposal.review}\n${state.proposal.file ?? "Exportación Markdown pendiente."}` : ""}`, "info");
+      ctx.ui.notify(`${state.enabled ? "Plan mode enabled." : "Plan mode disabled."}${state.proposal ? `\n${state.proposal.title} · revision ${state.proposal.revision} · ${state.proposal.review}\n${state.proposal.file ?? "Markdown export pending."}` : ""}`, "info");
       return;
     }
     if (text === "review" || text === "execute") {
       if (!state.enabled || !state.proposal || state.proposal.review === "stale") {
-        ctx.ui.notify("Primero presenta un plan actualizado con /plan y plan_submit.", "warning");
+        ctx.ui.notify("First submit an up-to-date plan with /plan and plan_submit.", "warning");
         return;
       }
       await review(ctx, true);
@@ -144,17 +144,17 @@ export default function planMode(pi: ExtensionAPI): void {
     }
     if (!text && state.enabled) {
       disable(ctx);
-      ctx.ui.notify("Plan mode desactivado.", "info");
+      ctx.ui.notify("Plan mode disabled.", "info");
       return;
     }
     enable(ctx);
     if (text === "refine" || text.startsWith("refine ")) {
-      const comments = text.slice(6).trim() || (ctx.hasUI ? await ctx.ui.input("¿Qué quieres cambiar o mejorar del plan?", undefined, { signal: interaction.signal }) : undefined);
-      if (comments?.trim()) pi.sendUserMessage(`Refina el plan actual con estos comentarios:\n${comments.trim()}`, { expandPromptTemplates: false });
+      const comments = text.slice(6).trim() || (ctx.hasUI ? await ctx.ui.input("What would you like to change or improve in the plan?", undefined, { signal: interaction.signal }) : undefined);
+      if (comments?.trim()) pi.sendUserMessage(`Refine the current plan with these comments:\n${comments.trim()}`, { expandPromptTemplates: false });
       return;
     }
     if (text && text !== "on") pi.sendUserMessage(text, { expandPromptTemplates: false });
-    else ctx.ui.notify("Plan mode activo. Describe lo que quieres planificar.", "info");
+    else ctx.ui.notify("Plan mode enabled. Describe what you want to plan.", "info");
   }
 
   function dialogSignal(signal?: AbortSignal): AbortSignal {
@@ -169,7 +169,7 @@ export default function planMode(pi: ExtensionAPI): void {
     if (!proposal.file) {
       try { proposal.file = await saveProposal(ctx.cwd, proposal.markdown, signal); }
       catch (error) {
-        if (!signal.aborted) ctx.ui.notify(`No se pudo guardar el plan: ${String(error)}. Reintenta /plan review.`, "error");
+        if (!signal.aborted) ctx.ui.notify(`Could not save the plan: ${String(error)}. Try /plan review again.`, "error");
         return;
       }
     }
@@ -178,17 +178,17 @@ export default function planMode(pi: ExtensionAPI): void {
     persist();
     updateUI(ctx);
     if (display) pi.sendMessage({ customType: PLAN_MESSAGE, content: proposal.markdown, display: true }, { triggerTurn: false });
-    const choice = await ctx.ui.select(`Revisión ${proposal.revision}: ${proposal.title}`, [
-      "Seguir planificando", "Refinar el plan", "Ejecutar en esta conversación", "Ejecutar en una sesión limpia",
+    const choice = await ctx.ui.select(`Review ${proposal.revision}: ${proposal.title}`, [
+      "Continue planning", "Refine the plan", "Execute in this conversation", "Execute in a clean session",
     ], { signal });
     if (reviewEpoch !== epoch || signal.aborted || state.proposal?.id !== proposal.id) return;
-    if (choice === "Refinar el plan") {
-      const comments = await ctx.ui.input("¿Qué quieres cambiar o mejorar?", undefined, { signal });
+    if (choice === "Refine the plan") {
+      const comments = await ctx.ui.input("What would you like to change or improve?", undefined, { signal });
       if (comments?.trim() && reviewEpoch === epoch && !signal.aborted) {
-        pi.sendUserMessage(`Refina el plan con estos comentarios:\n${comments.trim()}`, { deliverAs: "followUp", expandPromptTemplates: false });
+        pi.sendUserMessage(`Refine the plan with these comments:\n${comments.trim()}`, { deliverAs: "followUp", expandPromptTemplates: false });
       }
-    } else if (choice === "Ejecutar en esta conversación" || choice === "Ejecutar en una sesión limpia") {
-      approval = { token: randomUUID(), epoch, sessionId: ctx.sessionManager.getSessionId(), proposalId: proposal.id, fresh: choice === "Ejecutar en una sesión limpia" };
+    } else if (choice === "Execute in this conversation" || choice === "Execute in a clean session") {
+      approval = { token: randomUUID(), epoch, sessionId: ctx.sessionManager.getSessionId(), proposalId: proposal.id, fresh: choice === "Execute in a clean session" };
       // Commands execute immediately, then wait for idle without blocking this lifecycle handler.
       pi.sendUserMessage(`/plan apply ${approval.token}`, { expandPromptTemplates: true, deliverAs: "followUp" });
     }
@@ -231,7 +231,7 @@ export default function planMode(pi: ExtensionAPI): void {
       if (state.proposal) state.proposal.review = "held";
       persist();
       updateUI(ctx);
-      ctx.ui.notify("Sesión nueva cancelada. El plan sigue pendiente.", "info");
+      ctx.ui.notify("New session cancelled. The plan is still pending.", "info");
     }
   }
 
@@ -246,7 +246,7 @@ export default function planMode(pi: ExtensionAPI): void {
     if (handoff.model) {
       const model = ctx.modelRegistry.find(handoff.model.provider, handoff.model.id);
       if (!model || !(await pi.setModel(model))) {
-        ctx.ui.notify("No se pudo conservar el modelo de planificación. El plan está guardado; selecciona un modelo antes de implementar.", "error");
+        ctx.ui.notify("Could not preserve the planning model. The plan is saved; select a model before implementation.", "error");
         return;
       }
     }
@@ -260,7 +260,7 @@ export default function planMode(pi: ExtensionAPI): void {
   }
 
   pi.registerTool({
-    name: "plan_ask", label: "Decisiones del plan",
+    name: "plan_ask", label: "Plan decisions",
     description: "Ask relevant planning decisions or propose worthwhile improvements. Use options with tradeoffs or a free-form question. Cancellation leaves it unanswered; stop and wait.",
     parameters: Type.Object({ questions: Type.Array(Question, { minItems: 1, maxItems: 3 }) }),
     outputSchema: Type.Object({ status: StringEnum(["answered", "unanswered", "cancelled"] as const), answers: Type.Array(Type.Object({ question: Type.String(), answer: Type.Union([Type.String(), Type.Null()]) })) }),
@@ -272,13 +272,13 @@ export default function planMode(pi: ExtensionAPI): void {
       const answers: { question: string; answer: string | null }[] = [];
       let status: "answered" | "unanswered" | "cancelled" = "answered";
       for (const question of params.questions) {
-        if (!question.question.trim()) throw new Error("La pregunta no puede estar vacía.");
-        if (question.options && (new Set(question.options.map((option) => option.label.trim())).size !== question.options.length || question.options.filter((option) => option.recommended).length > 1)) throw new Error("Usa opciones distintas y como máximo una recomendación.");
+        if (!question.question.trim()) throw new Error("The question cannot be empty.");
+        if (question.options && (new Set(question.options.map((option) => option.label.trim())).size !== question.options.length || question.options.filter((option) => option.recommended).length > 1)) throw new Error("Use distinct options and at most one recommendation.");
         let answer: string | undefined;
         if (ctx.hasUI) {
           if (question.options) {
-            const labels = question.options.map((option) => `${option.label}${option.recommended ? " (Recomendado)" : ""} — ${option.description}`);
-            const custom = "Escribir respuesta libre…";
+            const labels = question.options.map((option) => `${option.label}${option.recommended ? " (Recommended)" : ""} — ${option.description}`);
+            const custom = "Enter a free-form answer…";
             const choice = await ctx.ui.select(question.question, [...labels, custom], { signal });
             signal.throwIfAborted();
             if (choice === custom) answer = await ctx.ui.input(question.question, undefined, { signal });
@@ -295,14 +295,14 @@ export default function planMode(pi: ExtensionAPI): void {
       }
       const data = { status, answers };
       return {
-        content: [{ type: "text", text: status === "answered" ? JSON.stringify(data) : `Preguntas pendientes: ${JSON.stringify(params.questions)}\n${JSON.stringify(data)}\nNo inventes respuestas; presenta las preguntas y espera al usuario.` }],
+        content: [{ type: "text", text: status === "answered" ? JSON.stringify(data) : `Pending questions: ${JSON.stringify(params.questions)}\n${JSON.stringify(data)}\nDo not invent answers; present the questions and wait for the user.` }],
         details: data, structuredContent: data, terminate: ctx.hasUI && status !== "answered",
       };
     },
   });
 
   pi.registerTool({
-    name: "plan_submit", label: "Propuesta de plan",
+    name: "plan_submit", label: "Plan proposal",
     description: "Present a complete self-contained Markdown plan only after consequential decisions are resolved. Include behavior/interfaces, accepted improvements, implementation steps, tests, and assumptions. Replaces the prior proposal; does not approve execution.",
     parameters: Type.Object({ title: Type.String({ minLength: 1, maxLength: 200 }), markdown: Type.String({ minLength: 1, maxLength: 120000 }) }),
     outputSchema: Type.Object({ id: Type.String(), revision: Type.Integer(), saved: Type.Boolean(), file: Type.Union([Type.String(), Type.Null()]) }),
@@ -311,7 +311,7 @@ export default function planMode(pi: ExtensionAPI): void {
     async execute(_id, params, operationSignal, _update, ctx) {
       const signal = dialogSignal(operationSignal);
       signal.throwIfAborted();
-      if (!params.title.trim() || !params.markdown.trim()) throw new Error("El título y el plan no pueden estar vacíos.");
+      if (!params.title.trim() || !params.markdown.trim()) throw new Error("The title and plan cannot be empty.");
       const proposal: Proposal = { id: randomUUID(), revision: (state.proposal?.revision ?? 0) + 1, title: params.title.trim(), markdown: params.markdown.trim(), review: "pending" };
       let error: unknown;
       try { proposal.file = await saveProposal(ctx.cwd, proposal.markdown, signal); }
@@ -322,7 +322,7 @@ export default function planMode(pi: ExtensionAPI): void {
       updateUI(ctx);
       const data = { id: proposal.id, revision: proposal.revision, saved: !!proposal.file, file: proposal.file ?? null };
       return {
-        content: [{ type: "text", text: `${proposal.markdown}\n\n${error ? `No se pudo guardar Markdown: ${String(error)}. Reintenta /plan review.` : `Guardado: ${proposal.file}. ${ctx.hasUI ? "El usuario elegirá cómo continuar." : "Incluye este plan en tu respuesta final y mantén plan mode."}`}` }],
+        content: [{ type: "text", text: `${proposal.markdown}\n\n${error ? `Could not save Markdown: ${String(error)}. Try /plan review again.` : `Saved: ${proposal.file}. ${ctx.hasUI ? "The user will choose how to continue." : "Include this plan in your final response and remain in plan mode."}`}` }],
         details: data, structuredContent: data, isError: !!error, terminate: ctx.hasUI && !error,
       };
     },
@@ -332,7 +332,7 @@ export default function planMode(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    name: "plan_inspect", label: "Consulta Git",
+    name: "plan_inspect", label: "Git inspection",
     description: "Read-only Git inspection with fixed operations; no arbitrary shell or flags. Use built-in read/search tools for other project discovery.",
     parameters: Type.Object({ operation: StringEnum(["status", "diff", "log", "show"] as const), ref: Type.Optional(Type.String({ maxLength: 200 })), path: Type.Optional(Type.String({ maxLength: 4096 })) }),
     outputSchema: Type.Object({ output: Type.String(), truncated: Type.Boolean() }),
@@ -342,7 +342,7 @@ export default function planMode(pi: ExtensionAPI): void {
       signal?.throwIfAborted();
       const result = await pi.exec("git", gitArguments(params.operation, params.ref, params.path), { cwd: ctx.cwd, signal, timeout: 10000 });
       signal?.throwIfAborted();
-      if (result.killed || result.code !== 0) throw new Error(result.killed ? "La consulta Git agotó su tiempo." : `Git: ${result.stderr || "la consulta falló"}`);
+      if (result.killed || result.code !== 0) throw new Error(result.killed ? "Git query timed out." : `Git: ${result.stderr || "the query failed"}`);
       const output = truncateHead(result.stdout, { maxLines: 1000, maxBytes: 30000 });
       const data = { output: output.content, truncated: output.truncated };
       return { content: [{ type: "text", text: `${data.output}${data.truncated ? "\n[Salida truncada; acota la consulta con path.]" : ""}` }], details: data, structuredContent: data };
@@ -350,7 +350,7 @@ export default function planMode(pi: ExtensionAPI): void {
   });
 
   pi.registerFlag("plan", { description: "Start in conversational plan mode", type: "boolean", default: false });
-  pi.registerCommand("plan", { description: "Planificar antes de implementar", handler: command });
+  pi.registerCommand("plan", { description: "Plan before implementation", handler: command });
   pi.registerMessageRenderer(PLAN_MESSAGE, (message) => new Markdown(typeof message.content === "string" ? message.content : "", 0, 0, getMarkdownTheme()));
   pi.on("session_start", (_event, ctx) => {
     restore(ctx);
@@ -388,20 +388,20 @@ export default function planMode(pi: ExtensionAPI): void {
   });
   pi.on("tool_call", (event) => {
     if (!state.enabled) {
-      if (PLAN_TOOLS.includes(event.toolName)) return { block: true, reason: "Activa /plan para usar esta herramienta." };
+      if (PLAN_TOOLS.includes(event.toolName)) return { block: true, reason: "Enable /plan to use this tool." };
       return;
     }
     if (PLAN_TOOLS.includes(event.toolName)) {
-      if (unanswered && event.toolName !== "plan_inspect") return { block: true, reason: "Hay una pregunta sin responder. Espera al usuario.", terminate: true };
+      if (unanswered && event.toolName !== "plan_inspect") return { block: true, reason: "There is an unanswered question. Wait for the user.", terminate: true };
       return;
     }
     if (!allowsTool(pi.getAllTools().find((tool) => tool.name === event.toolName))) {
-      return { block: true, reason: "Plan mode: esta herramienta no está habilitada para lectura. Revisa el plan antes de ejecutar." };
+      return { block: true, reason: "Plan mode: this tool is not enabled for reading. Review the plan before execution." };
     }
   });
   pi.on("user_bash", () => {
     if (state.enabled) return { result: {
-      output: "Plan mode bloquea ! y !!. Usa las herramientas de lectura o sal con /plan off.",
+      output: "Plan mode blocks ! and !!. Use read-only tools or exit with /plan off.",
       exitCode: 1, cancelled: false, truncated: false,
     } };
   });

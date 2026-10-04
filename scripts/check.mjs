@@ -22,7 +22,7 @@ try {
     include: [resolve("extensions/**/*.ts"), resolve("test/**/*.ts")],
   }));
   execFileSync(process.env.PI_PLAN_TSC ?? "tsc", ["-p", config], { stdio: "inherit" });
-  process.stdout.write(`Tipos comprobados contra Pi ${version}.\n`);
+  process.stdout.write(`Types checked against Pi ${version}.\n`);
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }

@@ -21,7 +21,7 @@ export type GitOperation = "status" | "diff" | "log" | "show";
 
 export function gitArguments(operation: GitOperation, ref?: string, path?: string): string[] {
   if (ref !== undefined && (!/^[a-zA-Z0-9][a-zA-Z0-9_./~^@{}+-]{0,199}$/.test(ref) || ref.includes(".."))) {
-    throw new Error("Referencia Git inválida; usa un hash o una referencia individual, sin opciones ni rangos.");
+    throw new Error("Invalid Git ref; use a hash or single ref, without options or ranges.");
   }
   const prefix = ["--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false", "-c", "log.showSignature=false", "-c", "diff.submodule=short"];
   switch (operation) {
