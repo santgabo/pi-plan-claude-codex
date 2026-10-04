@@ -129,3 +129,9 @@ El checker reutiliza las dependencias de la instalación de Pi. Las pruebas de d
 La suite comprueba instalación y carga automática, política de herramientas, snapshots de ramas, exportaciones, errores y cancelación, aprobación en ambas sesiones, conservación de modelo/razonamiento, invalidación de diálogos, refinamiento, reload, aislamiento del historial, llamadas anidadas, modos sin UI y terminal real. Utiliza el runtime instalado de Pi con un proveedor determinista sin llamadas a modelos ni credenciales reales. Las fixtures no se incluyen en el paquete distribuible.
 
 Estas pruebas verifican los mecanismos y el protocolo. No constituyen una evaluación conversacional con un modelo real ni una validación de clientes RPC específicos.
+
+### Integración continua
+
+GitHub Actions ejecuta `npm run check`, toda la suite de `npm test` y `npm pack --dry-run --ignore-scripts` en pull requests, pushes a `main` y ejecuciones manuales. El job usa Ubuntu 24.04, Node `24.x` y Python `3.12`, e incluye ambos modos de terminal y las pruebas de instalación del paquete.
+
+Pi `1.0.1`, sus paquetes internos y TypeScript `5.9.3` se instalan desde un [proyecto privado de herramientas de CI](../.github/ci/README.md) separado, con un lockfile versionado. El workflow usa allí `npm ci --ignore-scripts`, sin instalar el paquete raíz, por lo que las `peerDependencies` del host se mantienen intactas. La instalación de dependencias requiere acceso al registro npm; las pruebas utilizan fixtures deterministas offline y un registro local de pruebas. No se necesitan credenciales de modelos ni se publican paquetes automáticamente.

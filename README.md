@@ -129,3 +129,9 @@ The checker reuses dependencies from the Pi installation. Distribution tests pac
 The suite checks installation and automatic loading, tool policy, branch snapshots, exports, errors and cancellation, approval in both sessions, model/reasoning preservation, dialog invalidation, refinement, reload, history isolation, nested calls, non-UI modes, and a real terminal. It uses the installed Pi runtime with a deterministic provider and no model calls or real credentials. Fixtures are not included in the distributable package.
 
 These tests verify mechanisms and protocol behavior. They are not a conversational evaluation with a real model or validation of specific RPC clients.
+
+### Continuous integration
+
+GitHub Actions runs `npm run check`, the complete `npm test` suite, and `npm pack --dry-run --ignore-scripts` for pull requests, pushes to `main`, and manual runs. The job uses Ubuntu 24.04, Node `24.x`, and Python `3.12`, including both terminal modes and package-installation tests.
+
+Pi `1.0.1`, its internal packages, and TypeScript `5.9.3` are installed from a separate private [CI tooling project](.github/ci/README.md) with a committed lockfile. The workflow uses `npm ci --ignore-scripts` there, not an installation of the root package, so host `peerDependencies` remain unchanged. Dependency installation needs npm registry access; the tests use deterministic offline fixtures and a local test registry. No model credentials or automatic package publication are involved.
