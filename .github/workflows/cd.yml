@@ -1,0 +1,61 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # workflow_run can be privileged: never check out PR or fork code here.
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run
+    if: >-
+      github.repository == 'santgabo/pi-plan-claude-codex' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the commit that passed CI
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      # npm Trusted Publishing requires npm >= 11.5.1; no stored npm token is used.
+      # https://docs.npmjs.com/trusted-publishers/
+      - name: Install compatible npm
+        run: npm install --global npm@11.16.0 --ignore-scripts --no-audit --no-fund
+
+      - name: Verify publishing tools
+        run: |
+          node --version
+          test "$(npm --version)" = "11.16.0"
+
+      - name: Check whether this version needs publication
+        id: release
+        run: node scripts/npm-release.ts
+
+      - name: Publish to npm with OIDC
+        if: steps.release.outputs.publish == 'true'
+        run: npm publish --access public --tag latest --ignore-scripts
