@@ -35,11 +35,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Pi and TypeScript
-        run: npm install --global @earendil-works/pi-coding-agent@1.0.1 typescript@5.9.3
+      - name: Install locked CI tools
+        working-directory: .github/ci
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Configure Pi host resolution
-        run: echo "PI_PLAN_HOST_ROOT=$(npm root --global)/@earendil-works/pi-coding-agent" >> "$GITHUB_ENV"
+        run: |
+          echo "$GITHUB_WORKSPACE/.github/ci/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "PI_PLAN_HOST_ROOT=$GITHUB_WORKSPACE/.github/ci/node_modules/@earendil-works/pi-coding-agent" >> "$GITHUB_ENV"
 
       - name: Show tool versions
         run: |
