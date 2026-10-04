@@ -1,0 +1,20 @@
+{
+  "name": "pi-plan-claude-codex",
+  "version": "0.1.0",
+  "description": "Conversational plan mode with questions, review, and explicit execution for Pi",
+  "type": "module",
+  "keywords": ["pi-package"],
+  "engines": { "node": ">=22.19.0" },
+  "files": ["extensions", "README.md"],
+  "pi": { "extensions": ["./extensions/plan-mode/index.ts"] },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node --import ./scripts/register-host.mjs --test test/*.test.ts"
+  }
+}
