@@ -2,9 +2,9 @@
 
 > 🌐 Disponible en : [English](../README.md) | [Español](README.es.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md).
 
-Extension TypeScript qui ajoute la planification conversationnelle à **Pi Agent 1.0.1** : explorer un projet, clarifier les décisions, suggérer des améliorations utiles et présenter un plan avant l'implémentation. Paquet : `pi-plan-claude-codex`, version `0.1.1`.
+Extension TypeScript qui ajoute la planification conversationnelle à Pi-agent v1 or later : explorer un projet, clarifier les décisions, suggérer des améliorations utiles et présenter un plan avant l'implémentation. Paquet : `pi-plan-claude-codex`, version `0.1.1`.
 
-Le workflow s'inspire de la [planification de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) et de la [revue et approbation de plans de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). L'implémentation utilise les API publiques et la documentation d'une installation locale de Pi 1.0.1 ; revérifiez ces contrats avant d'utiliser d'autres versions.
+Le workflow s'inspire de la [planification de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) et de la [revue et approbation de plans de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). L'implémentation cible les API publiques d'extension de Pi-agent v1 or later ; les versions majeures ultérieures peuvent nécessiter une vérification de compatibilité.
 
 ## Installation et utilisation
 
@@ -38,7 +38,7 @@ pi install /absolute/path/to/pi-plan-claude-codex
 
 Utilisez ensuite le même flux `pi` → `/plan`.
 
-Nécessite Pi 1.0.1 et Node.js `>=22.19.0`. Pi charge le TypeScript directement sans étape de compilation préalable et fournit les dépendances déclarées dans `peerDependencies`.
+Nécessite Pi-agent v1 or later et Node.js `>=22.19.0`. Pi charge le TypeScript directement sans étape de compilation préalable et fournit les dépendances déclarées dans `peerDependencies`.
 
 ## Déroulement
 

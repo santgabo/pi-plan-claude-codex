@@ -2,9 +2,9 @@
 
 > 🌐 其他语言：[English](../README.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português](README.pt.md) | [日本語](README.ja.md)。
 
-一个为 **Pi Agent 1.0.1** 添加对话式规划能力的 TypeScript 扩展：探索项目、澄清决策、提出有用的改进建议，并在实施之前呈现计划。软件包：`pi-plan-claude-codex`，版本 `0.1.1`。
+一个为 Pi-agent v1 or later 添加对话式规划能力的 TypeScript 扩展：探索项目、澄清决策、提出有用的改进建议，并在实施之前呈现计划。软件包：`pi-plan-claude-codex`，版本 `0.1.1`。
 
-工作流程借鉴了 [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 和 [Claude Code 计划评审与批准](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan)。实现基于本地 Pi 1.0.1 安装中的公开 API 和文档；在用于其他版本之前，请重新核对这些约定。
+工作流程借鉴了 [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 和 [Claude Code 计划评审与批准](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan)。实现面向 Pi-agent v1 or later 的公开扩展 API；后续主版本可能需要重新检查兼容性。
 
 ## 安装与使用
 
@@ -38,7 +38,7 @@ pi install /absolute/path/to/pi-plan-claude-codex
 
 然后使用相同的 `pi` → `/plan` 工作流程。
 
-要求 Pi 1.0.1 和 Node.js `>=22.19.0`。Pi 直接加载 TypeScript，无需事先编译，并提供 `peerDependencies` 中声明的依赖。
+要求 Pi-agent v1 or later 和 Node.js `>=22.19.0`。Pi 直接加载 TypeScript，无需事先编译，并提供 `peerDependencies` 中声明的依赖。
 
 ## 工作流程
 

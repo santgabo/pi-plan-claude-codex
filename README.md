@@ -2,9 +2,9 @@
 
 > 🌐 Available in: [Español](docs/README.es.md) | [Français](docs/README.fr.md) | [Português](docs/README.pt.md) | [日本語](docs/README.ja.md) | [简体中文](docs/README.zh-CN.md).
 
-A TypeScript extension that adds conversational planning to **Pi Agent 1.0.1**: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.1`.
+A TypeScript extension that adds conversational planning to Pi-agent v1 or later: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.1`.
 
-The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation uses the public APIs and documentation from a local Pi 1.0.1 installation; recheck those contracts before using other versions.
+The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation targets the public extension APIs of Pi-agent v1 or later; later major releases may require a compatibility review.
 
 ## Install and use
 
@@ -38,7 +38,7 @@ pi install /absolute/path/to/pi-plan-claude-codex
 
 Then use the same `pi` → `/plan` workflow.
 
-Requires Pi 1.0.1 and Node.js `>=22.19.0`. Pi loads TypeScript directly without a prior compilation step and provides the dependencies declared in `peerDependencies`.
+Requires Pi-agent v1 or later and Node.js `>=22.19.0`. Pi loads TypeScript directly without a prior compilation step and provides the dependencies declared in `peerDependencies`.
 
 ## Workflow
 

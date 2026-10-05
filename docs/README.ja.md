@@ -2,9 +2,9 @@
 
 > 🌐 他の言語： [English](../README.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português](README.pt.md) | [简体中文](README.zh-CN.md)。
 
-**Pi Agent 1.0.1** に対話型プランニングを追加する TypeScript 拡張です。プロジェクトの調査、決定事項の明確化、有用な改善の提案、そして実装前のプラン提示を行います。パッケージ：`pi-plan-claude-codex`、バージョン `0.1.1`。
+Pi-agent v1 or later に対話型プランニングを追加する TypeScript 拡張です。プロジェクトの調査、決定事項の明確化、有用な改善の提案、そして実装前のプラン提示を行います。パッケージ：`pi-plan-claude-codex`、バージョン `0.1.1`。
 
-ワークフローは [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) と [Claude Code のプランレビューと承認](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan) を参考にしています。実装はローカルの Pi 1.0.1 インストールの公開 API とドキュメントを使用しています。他のバージョンで使用する前に、これらの契約を再確認してください。
+ワークフローは [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) と [Claude Code のプランレビューと承認](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan) を参考にしています。実装は Pi-agent v1 or later の公開拡張 API を対象としています。今後のメジャーバージョンでは互換性の確認が必要になる場合があります。
 
 ## インストールと使い方
 
@@ -38,7 +38,7 @@ pi install /absolute/path/to/pi-plan-claude-codex
 
 その後は同じ `pi` → `/plan` の流れで使用します。
 
-Pi 1.0.1 と Node.js `>=22.19.0` が必要です。Pi は TypeScript を事前コンパイルなしで直接読み込み、`peerDependencies` で宣言された依存関係を提供します。
+Pi-agent v1 or later と Node.js `>=22.19.0` が必要です。Pi は TypeScript を事前コンパイルなしで直接読み込み、`peerDependencies` で宣言された依存関係を提供します。
 
 ## ワークフロー
 
