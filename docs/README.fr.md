@@ -26,9 +26,9 @@ Activez le mode dans la conversation :
 /plan
 ```
 
-Dans la TUI, le raccourci fixe **Ctrl+Alt+P** (**Ctrl+Option+P** sur macOS) active ou désactive aussi le mode, comme `/plan` sans argument. Il conserve le brouillon de l'éditeur et la proposition actuelle, n'envoie aucune requête au modèle et **n'approuve ni n'exécute jamais un plan**. La désactivation restaure les outils précédents. Pendant un tour actif, il affiche uniquement un avertissement : il n'interrompt pas le travail et ne programme aucun changement ultérieur.
+Dans la TUI sur macOS/Linux, le raccourci fixe **Ctrl+Q** active ou désactive aussi le mode, comme `/plan` sans argument. Il conserve le brouillon de l'éditeur et la proposition actuelle, n'envoie aucune requête au modèle et **n'approuve ni n'exécute jamais un plan**. La désactivation restaure les outils précédents. Pendant un tour actif, il affiche uniquement un avertissement : il n'interrompt pas le travail et ne programme aucun changement ultérieur.
 
-Sur macOS, configurez si nécessaire votre terminal pour transmettre Option comme Alt/Meta. Les dialogues natifs de Pi conservent le focus clavier ; ce raccourci n'est pas global. Si le terminal, le système d'exploitation ou un autre raccourci intercepte la combinaison, utilisez `/plan` à la place.
+Ctrl+Q utilise Control, et non Command, et ne nécessite aucune configuration Option/Meta sur macOS. Les dialogues natifs de Pi conservent le focus clavier ; ce raccourci n'est pas global. Si le terminal, le système d'exploitation ou un autre raccourci intercepte la combinaison, utilisez `/plan` à la place. Sur Windows/WSL, Pi réserve Ctrl+Q aux messages de suivi en file d'attente et ignore le raccourci de l'extension ; utilisez `/plan`.
 
 Décrivez ensuite votre objectif dans un message ordinaire, par exemple : « Je veux ajouter une recherche au catalogue ; étudiez son fonctionnement et suggérez des améliorations avant de décider. »
 
@@ -67,7 +67,7 @@ Annuler la révision maintient le mode actif. Une approbation ne vaut que pour c
 | Commande | Résultat |
 | --- | --- |
 | `/plan` | Active ou désactive le mode plan. |
-| Ctrl+Alt+P (macOS : Ctrl+Option+P) | Même bascule que `/plan`, dans la TUI. |
+| Ctrl+Q (macOS/Linux) | Même bascule que `/plan`, dans la TUI. |
 | `/plan <demande>` | Active le mode et commence à planifier cette demande. |
 | `/plan on` | Active sans envoyer de demande au modèle. |
 | `/plan off` | Désactive le mode et restaure les outils précédents. |
@@ -127,7 +127,7 @@ npm test
 npm pack --dry-run --ignore-scripts
 ```
 
-Le vérificateur réutilise les dépendances de l'installation de Pi. Les tests de distribution empaquettent l'extension, servent l'archive depuis un registre npm local et exécutent `pi install npm:pi-plan-claude-codex` dans un profil temporaire. Ils démarrent ensuite `pi` sans arguments et activent `/plan` dans un vrai terminal. Ils ne modifient pas la configuration personnelle de l'utilisateur et ne téléchargent pas de dépendances tierces.
+Le vérificateur réutilise les dépendances de l'installation de Pi. Les tests de distribution empaquettent l'extension, servent l'archive depuis un registre npm local et exécutent `pi install npm:pi-plan-claude-codex` dans un profil temporaire. Ils démarrent ensuite `pi` sans arguments et testent `/plan` et Ctrl+Q dans une PTY. Ces tests automatisés vérifient le paquet installé, pas une frappe physique dans une application de terminal particulière. Ils ne modifient pas la configuration personnelle de l'utilisateur et ne téléchargent pas de dépendances tierces.
 
 `check` nécessite `tsc` sur le PATH. Vous pouvez spécifier `PI_PLAN_HOST_ROOT` (la racine du paquet Pi) et `PI_PLAN_TSC` (l'exécutable du vérificateur). Les tests utilisent l'élimination native des types de Node et ont été vérifiés avec Node `24.18.0`. Les tests de terminal Unix nécessitent Python 3 et sont ignorés sous Windows.
 

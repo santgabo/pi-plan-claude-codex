@@ -26,9 +26,9 @@ Activate the mode in the conversation:
 /plan
 ```
 
-In the TUI, the fixed **Ctrl+Alt+P** shortcut (**Ctrl+Option+P** on macOS) also toggles the mode, just like `/plan` without arguments. It preserves the editor draft and current proposal, sends no model request, and **never approves or executes a plan**. Disabling restores the previous tools. During an active turn, it only shows a warning: it neither interrupts the work nor schedules a later toggle.
+In the macOS/Linux TUI, the fixed **Ctrl+Q** shortcut also toggles the mode, just like `/plan` without arguments. It preserves the editor draft and current proposal, sends no model request, and **never approves or executes a plan**. Disabling restores the previous tools. During an active turn, it only shows a warning: it neither interrupts the work nor schedules a later toggle.
 
-On macOS, configure your terminal to send Option as Alt/Meta if needed. Native Pi dialogs retain keyboard focus; this is not a global shortcut. If your terminal, operating system, or another shortcut intercepts the combination, use `/plan` instead.
+Ctrl+Q uses Control, not Command, and requires no Option/Meta configuration on macOS. Native Pi dialogs retain keyboard focus; this is not a global shortcut. If your terminal, operating system, or another shortcut intercepts the combination, use `/plan` instead. On Windows/WSL, Pi reserves Ctrl+Q for queued follow-up messages and skips the extension shortcut; use `/plan` there.
 
 Now describe your goal in a regular message, for example: “I want to add catalog search; investigate how it works and suggest improvements before deciding.”
 
@@ -69,7 +69,7 @@ There is no limit on refinement rounds. Continue with ordinary messages or the r
 | Command | Result |
 | --- | --- |
 | `/plan` | Toggle plan mode. |
-| Ctrl+Alt+P (macOS: Ctrl+Option+P) | Same toggle as `/plan`, in the TUI. |
+| Ctrl+Q (macOS/Linux) | Same toggle as `/plan`, in the TUI. |
 | `/plan <request>` | Enable the mode and start planning that request. |
 | `/plan on` | Enable without sending a request to the model. |
 | `/plan off` | Disable the mode and restore the previous tools. |
@@ -129,7 +129,7 @@ npm test
 npm pack --dry-run --ignore-scripts
 ```
 
-The checker reuses dependencies from the Pi installation. Distribution tests package the extension, serve the tarball from a local npm registry, and run `pi install npm:pi-plan-claude-codex` in a temporary profile. They then start `pi` without arguments and activate `/plan` in a real terminal. They do not modify the user's personal configuration or download third-party dependencies.
+The checker reuses dependencies from the Pi installation. Distribution tests package the extension, serve the tarball from a local npm registry, and run `pi install npm:pi-plan-claude-codex` in a temporary profile. They then start `pi` without arguments and test both `/plan` and Ctrl+Q in a PTY. These automated tests verify the installed package, not a physical keypress in a specific terminal application. They do not modify the user's personal configuration or download third-party dependencies.
 
 `check` requires `tsc` on PATH. You can specify `PI_PLAN_HOST_ROOT` (the Pi package root) and `PI_PLAN_TSC` (the checker executable). Integration tests launch `pi` from PATH; use the same installation for types and processes. Local validation passed with Pi `1.0.4`, TypeScript `5.9.3`, Node `24.18.0`, and Python `3.14.7` on macOS. Tests use Node's native type stripping. Unix terminal tests require Python 3 and are skipped on Windows.
 

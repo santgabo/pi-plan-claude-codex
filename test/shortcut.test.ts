@@ -3,10 +3,19 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { type TestContext } from "node:test";
-import { DefaultResourceLoader, ExtensionRunner, ModelRegistry, ModelRuntime, SessionManager, type ExtensionCommandContext, type ExtensionUIContext, type ToolInfo } from "@earendil-works/pi-coding-agent";
+import { DefaultResourceLoader, ExtensionRunner, ModelRegistry, ModelRuntime, SessionManager, type ExtensionCommandContext, type ExtensionUIContext, type KeybindingsManager, type ToolInfo } from "@earendil-works/pi-coding-agent";
 import { matchesKey, setKittyProtocolActive } from "@earendil-works/pi-tui";
 import planMode from "../extensions/plan-mode/index.ts";
 import { restoreState, STATE_TYPE, type PlanState } from "../extensions/plan-mode/state.ts";
+
+// Pi exports the app manager only as a type. Read its installed implementation
+// to test the same defaults the TUI uses, without touching personal keybindings.
+function isKeybindingsModule(value: unknown): value is { KeybindingsManager: new () => KeybindingsManager } {
+  return typeof value === "object" && value !== null && "KeybindingsManager" in value && typeof value.KeybindingsManager === "function";
+}
+const keybindingsModule: unknown = await import(new URL("./core/keybindings.js", import.meta.resolve("@earendil-works/pi-coding-agent")).href);
+assert.ok(isKeybindingsModule(keybindingsModule));
+const defaultKeybindings = new keybindingsModule.KeybindingsManager().getEffectiveConfig();
 
 const normalTools = ["write", "read", "external_read", "bash"];
 const allTools: ToolInfo[] = [...normalTools, "grep", "plan_ask", "plan_submit", "plan_inspect"].map((name) => ({
@@ -64,10 +73,12 @@ async function harness(t: TestContext, options: { flag?: boolean; saved?: PlanSt
   runner.setUIContext(ui, "tui");
   if (options.flag) runner.setFlagValue("plan", true);
   await runner.emit({ type: "session_start", reason: "startup" });
-  const shortcuts = runner.getShortcuts({});
+  // Handler behavior is independent of whether the host reserves this key.
+  // Effective TUI registration against real defaults is checked separately.
+  const shortcuts = loaded.extensions[0].shortcuts;
   assert.equal(shortcuts.size, 1);
-  assert.deepEqual(runner.getShortcutDiagnostics(), []);
-  const shortcut = shortcuts.get("ctrl+alt+p");
+  assert.equal(shortcuts.has("ctrl+alt+p"), false);
+  const shortcut = shortcuts.get("ctrl+q");
   assert.ok(shortcut);
   assert.equal(shortcut.description, "Toggle plan mode");
   const command = loaded.extensions[0].commands.get("plan");
@@ -82,16 +93,32 @@ async function harness(t: TestContext, options: { flag?: boolean; saved?: PlanSt
   };
 }
 
-test("fixed shortcut matches legacy, CSI-u, and modifyOtherKeys, not model-selection keys", () => {
-  setKittyProtocolActive(false);
-  assert.ok(matchesKey("\x1b\x10", "ctrl+alt+p"));
-  for (const kitty of [false, true]) {
-    setKittyProtocolActive(kitty);
-    assert.ok(matchesKey("\x1b[112;7u", "ctrl+alt+p"));
-    assert.ok(matchesKey("\x1b[27;7;112~", "ctrl+alt+p"));
-    for (const key of ["\x10", "\x1b[112;6u", "\x1bp", "p"]) assert.equal(matchesKey(key, "ctrl+alt+p"), false);
+test("Ctrl+Q matches control, CSI-u, and modifyOtherKeys, not the removed shortcut or model-selection keys", () => {
+  try {
+    for (const kitty of [false, true]) {
+      setKittyProtocolActive(kitty);
+      for (const key of ["\x11", "\x1b[113;5u", "\x1b[27;5;113~"]) assert.ok(matchesKey(key, "ctrl+q"));
+      for (const key of ["q", "\x1bq", "\x10", "\x1b[112;6u", "\x1b\x10", "\x1b[112;7u", "\x1b[27;7;112~"]) assert.equal(matchesKey(key, "ctrl+q"), false);
+    }
+  } finally { setKittyProtocolActive(false); }
+});
+
+test("Ctrl+Q registration uses actual host defaults and never overrides reserved copy or follow-up keys", async (t) => {
+  const h = await harness(t);
+  const shortcuts = h.runner.getShortcuts(defaultKeybindings);
+  const followUp = defaultKeybindings["app.message.followUp"];
+  const reserved = (Array.isArray(followUp) ? followUp : [followUp]).includes("ctrl+q");
+  assert.equal(shortcuts.has("ctrl+q"), !reserved); // Windows/WSL reserves it for follow-up.
+  assert.equal(shortcuts.size, reserved ? 0 : 1);
+  assert.equal(shortcuts.has("ctrl+alt+p"), false);
+  assert.equal(shortcuts.has("ctrl+x"), false);
+  assert.equal(h.runner.getShortcutDiagnostics().length, reserved ? 1 : 0);
+  for (const action of ["app.message.copy", "app.message.followUp"] as const) {
+    const conflicting = h.runner.getShortcuts({ ...defaultKeybindings, [action]: "ctrl+q" });
+    assert.equal(conflicting.size, 0);
+    assert.equal(h.runner.getShortcutDiagnostics().length, 1);
+    assert.match(h.runner.getShortcutDiagnostics()[0].message, /conflicts with built-in shortcut\. Skipping/);
   }
-  setKittyProtocolActive(false);
 });
 
 test("shortcut and bare command have identical state, tools, UI, and notifications", async (t) => {

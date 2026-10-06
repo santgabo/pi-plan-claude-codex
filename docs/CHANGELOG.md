@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Replace the plan-mode shortcut with Ctrl+Q on macOS/Linux, removing Ctrl+Alt+P rather than retaining it as an alias. No Option/Meta terminal configuration is required. Windows/WSL keeps Pi's reserved Ctrl+Q follow-up action; use `/plan` there.
+- Verify shortcut registration against the installed host's actual default keybindings and reserved-key conflicts. Exercise Ctrl+Q and the removed shortcut in both TUI modes, including through the installed npm package in disposable offline profiles.
+
 ## 0.1.2 — 2026-10-06
 
 Summary of merged [PR #3](https://github.com/santgabo/pi-plan-claude-codex/pull/3) and [PR #4](https://github.com/santgabo/pi-plan-claude-codex/pull/4).
