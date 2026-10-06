@@ -2,7 +2,7 @@
 
 > 🌐 他の言語： [English](../README.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português](README.pt.md) | [简体中文](README.zh-CN.md)。
 
-Pi-agent v1 or later に対話型プランニングを追加する TypeScript 拡張です。プロジェクトの調査、決定事項の明確化、有用な改善の提案、そして実装前のプラン提示を行います。パッケージ：`pi-plan-claude-codex`、バージョン `0.1.1`。
+Pi-agent v1 or later に対話型プランニングを追加する TypeScript 拡張です。プロジェクトの調査、決定事項の明確化、有用な改善の提案、そして実装前のプラン提示を行います。パッケージ：`pi-plan-claude-codex`、バージョン `0.1.2`。
 
 ワークフローは [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) と [Claude Code のプランレビューと承認](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan) を参考にしています。実装は Pi-agent v1 or later の公開拡張 API を対象としています。検証済みの基準バージョンは Pi **1.0.4** です。すべての過去および将来のバージョンとの互換性を保証するものではありません。
 

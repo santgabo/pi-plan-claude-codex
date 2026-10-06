@@ -1,10 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 — 2026-10-06
+
+Summary of merged [PR #3](https://github.com/santgabo/pi-plan-claude-codex/pull/3) and [PR #4](https://github.com/santgabo/pi-plan-claude-codex/pull/4).
 
 ### Added
 
 - Toggle plan mode in the TUI with the fixed Ctrl+Alt+P shortcut (Ctrl+Option+P on macOS), preserving the editor draft and proposal. Busy turns only show a warning; toggling never approves or executes a plan. `/plan` remains available.
+- Add deterministic shortcut state and terminal tests, planning prompt-contract tests, and RPC coverage for instruction removal after approval and recovery exclusions after cancellation, errors, aborts, or failed exports.
+
+### Changed
+
+- Use Pi 1.0.4 as the tested reference and pin CI tooling to that version, keeping TypeScript at 5.9.3 and host peer dependency ranges unchanged.
+- Focus planning instructions on consequential decisions: investigate only as needed, preserve accepted choices, avoid filler questions or forced improvements, and submit directly when the request is sufficiently defined.
+- Clarify presentation after submission: TUI/RPC waits for review without repeating the full plan in chat; text/JSON includes the complete plan in the final response. Read-only restrictions and explicit execution approval remain unchanged.
+- Update compatibility and workflow documentation, record local validation limits, and explain that RPC clients must explicitly cancel open review dialogs.
 
 ## 0.1.1 — 2026-10-04
 
