@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 import type { RpcCommand, RpcExtensionUIResponse } from "@earendil-works/pi-coding-agent";
 import { isState } from "../extensions/plan-mode/state.ts";
+import { WORKFLOW } from "../extensions/plan-mode/prompt.ts";
 
 interface RecordMessage {
   type: string;
@@ -36,6 +37,34 @@ function snapshot(record: RecordMessage) {
   const last = [...entries].reverse().find((entry: unknown) => isObject(entry) && entry.customType === "pi-plan-claude-codex.state");
   assert.ok(isObject(last) && isState(last.data));
   return last.data;
+}
+
+function providerRequests(record: RecordMessage): Record<string, unknown>[] {
+  const entries = data(record).entries;
+  assert.ok(Array.isArray(entries));
+  return entries.flatMap((entry: unknown) => isObject(entry) && entry.customType === "plan-fixture.request" && isObject(entry.data) ? [entry.data] : []);
+}
+
+function assertPlanningRequest(request: Record<string, unknown>, dialogs: boolean): void {
+  assert.ok(isObject(request.sections));
+  // Pi wraps named sections in tags before delivering them to the provider.
+  assert.ok(typeof request.sections.plan_mode === "string" && request.sections.plan_mode.includes(WORKFLOW));
+  const interaction = request.sections.plan_interaction;
+  assert.ok(typeof interaction === "string");
+  assert.match(interaction, /plan_submit/);
+  if (dialogs) {
+    assert.match(interaction, /Use plan_ask.*for review/);
+    assert.match(interaction, /without repeating the full plan in chat/);
+  } else {
+    assert.match(interaction, /plan_ask is unavailable/);
+    assert.match(interaction, /pending questions in your final response and wait/);
+    assert.match(interaction, /full Markdown in your final response/);
+    assert.match(interaction, /Never approve or execute automatically/);
+  }
+  assert.ok(Array.isArray(request.tools));
+  assert.equal(request.tools.includes("plan_ask"), dialogs);
+  for (const name of ["plan_submit", "plan_inspect", "read", "grep", "find", "ls"]) assert.ok(request.tools.includes(name), name);
+  for (const name of ["write", "edit", "bash", "codemode"]) assert.ok(!request.tools.includes(name), name);
 }
 
 class Client {
@@ -158,6 +187,9 @@ for (const fresh of [false, true]) {
       const original = await client.response({ type: "get_state" });
       await client.response({ type: "prompt", message: "Plan the work" });
       const dialog = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select");
+      const requests = providerRequests(await client.response({ type: "get_entries" }));
+      assert.equal(requests.length, 1, "a defined task goes directly to submission without an interview or duplicate summary");
+      assertPlanningRequest(requests[0], true);
       const beforeApproval = client.records.length;
       client.answer(dialog, fresh ? "Execute in a clean session" : "Execute in this conversation");
       await client.wait((record) => record.type === "message_end" && JSON.stringify(record).includes("IMPLEMENTED"), beforeApproval);
@@ -175,6 +207,14 @@ for (const fresh of [false, true]) {
       assert.equal(currentData.sessionId === data(original).sessionId, !fresh);
       const entries = await client.response({ type: "get_entries" });
       assert.equal(snapshot(entries).enabled, false);
+      const executionRequests = providerRequests(entries).slice(fresh ? 0 : requests.length);
+      assert.equal(executionRequests.length, 2, "write and final response");
+      for (const request of executionRequests) {
+        assert.ok(isObject(request.sections));
+        for (const key of ["plan_mode", "plan_proposal", "plan_interaction"]) assert.equal(request.sections[key], undefined, key);
+        assert.ok(Array.isArray(request.tools) && request.tools.includes("write"));
+        assert.ok(!request.tools.some((name: unknown) => typeof name === "string" && name.startsWith("plan_")));
+      }
       if (fresh) {
         assert.match(JSON.stringify(entries.data), /handoff/);
         assert.doesNotMatch(JSON.stringify(entries.data), /"content":"Plan the work"/);
@@ -284,7 +324,11 @@ for (const mode of ["text", "json"]) {
         ], { cwd: root, env: { ...process.env, PI_CODING_AGENT_DIR: join(root, "agent"), PI_PLAN_SCENARIO: scenario }, encoding: "utf8", timeout: 15000 });
         assert.match(output, scenario === "plan" ? /# Example plan/ : /PENDING QUESTION/);
         if (mode === "json") {
-          for (const line of output.trim().split("\n")) assert.ok(isRecord(JSON.parse(line)));
+          const records: unknown[] = output.trim().split("\n").map((line) => JSON.parse(line));
+          for (const record of records) assert.ok(isRecord(record));
+          const requests = records.flatMap((record) => isObject(record) && record.type === "entry_appended" && isObject(record.entry) && record.entry.customType === "plan-fixture.request" && isObject(record.entry.data) ? [record.entry.data] : []);
+          assert.equal(requests.length, scenario === "plan" ? 2 : 1, "no headless recovery");
+          for (const request of requests) assertPlanningRequest(request, false);
           assert.doesNotMatch(output, /extension_ui_request/);
         }
         await assert.rejects(readFile(join(root, "implementation.txt")));
