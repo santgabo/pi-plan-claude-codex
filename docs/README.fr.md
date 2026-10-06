@@ -26,9 +26,13 @@ Activez le mode dans la conversation :
 /plan
 ```
 
+Dans la TUI, le raccourci fixe **Ctrl+Alt+P** (**Ctrl+Option+P** sur macOS) active ou désactive aussi le mode, comme `/plan` sans argument. Il conserve le brouillon de l'éditeur et la proposition actuelle, n'envoie aucune requête au modèle et **n'approuve ni n'exécute jamais un plan**. La désactivation restaure les outils précédents. Pendant un tour actif, il affiche uniquement un avertissement : il n'interrompt pas le travail et ne programme aucun changement ultérieur.
+
+Sur macOS, configurez si nécessaire votre terminal pour transmettre Option comme Alt/Meta. Les dialogues natifs de Pi conservent le focus clavier ; ce raccourci n'est pas global. Si le terminal, le système d'exploitation ou un autre raccourci intercepte la combinaison, utilisez `/plan` à la place.
+
 Décrivez ensuite votre objectif dans un message ordinaire, par exemple : « Je veux ajouter une recherche au catalogue ; étudiez son fonctionnement et suggérez des améliorations avant de décider. »
 
-L'installation enregistre le paquet dans la configuration personnelle de Pi. Il se charge automatiquement lors des lancements suivants, ce qui rend `/plan` disponible. Activez le mode avec cette commande ; aucun chemin ni option n'est nécessaire au démarrage. `/plan <demande>` est également pris en charge comme raccourci.
+L'installation enregistre le paquet dans la configuration personnelle de Pi. Il se charge automatiquement lors des lancements suivants, ce qui rend `/plan` disponible. Activez le mode avec cette commande ou le raccourci clavier ; aucun chemin ni option n'est nécessaire au démarrage. `/plan <demande>` est également pris en charge comme raccourci.
 
 Pour installer une copie locale, y compris avant la première publication npm, exécutez :
 
@@ -63,6 +67,7 @@ Annuler la révision maintient le mode actif. Une approbation ne vaut que pour c
 | Commande | Résultat |
 | --- | --- |
 | `/plan` | Active ou désactive le mode plan. |
+| Ctrl+Alt+P (macOS : Ctrl+Option+P) | Même bascule que `/plan`, dans la TUI. |
 | `/plan <demande>` | Active le mode et commence à planifier cette demande. |
 | `/plan on` | Active sans envoyer de demande au modèle. |
 | `/plan off` | Désactive le mode et restaure les outils précédents. |

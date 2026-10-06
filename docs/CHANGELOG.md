@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Toggle plan mode in the TUI with the fixed Ctrl+Alt+P shortcut (Ctrl+Option+P on macOS), preserving the editor draft and proposal. Busy turns only show a warning; toggling never approves or executes a plan. `/plan` remains available.
+
 ## 0.1.1 — 2026-10-04
 
 ### Fixed

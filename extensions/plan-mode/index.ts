@@ -101,6 +101,20 @@ export default function planMode(pi: ExtensionAPI): void {
     updateUI(ctx);
   }
 
+  function toggle(ctx: ExtensionContext): void {
+    if (!ctx.isIdle()) {
+      ctx.ui.notify("Wait for the turn to finish before changing plan mode.", "warning");
+      return;
+    }
+    if (state.enabled) {
+      disable(ctx);
+      ctx.ui.notify("Plan mode disabled.", "info");
+    } else {
+      enable(ctx);
+      ctx.ui.notify("Plan mode enabled. Describe what you want to plan.", "info");
+    }
+  }
+
   function restore(ctx: ExtensionContext): void {
     const previousTools = state.enabled ? state.toolsBeforePlan : undefined;
     cancelInteraction();
@@ -116,6 +130,10 @@ export default function planMode(pi: ExtensionAPI): void {
 
   async function command(args: string, ctx: ExtensionCommandContext): Promise<void> {
     const text = args.trim();
+    if (!text) {
+      toggle(ctx);
+      return;
+    }
     if (text.startsWith("apply ")) {
       await executeApproval(text.slice(6), ctx);
       return;
@@ -142,11 +160,6 @@ export default function planMode(pi: ExtensionAPI): void {
     }
     if (text === "off") {
       if (state.enabled) disable(ctx);
-      return;
-    }
-    if (!text && state.enabled) {
-      disable(ctx);
-      ctx.ui.notify("Plan mode disabled.", "info");
       return;
     }
     enable(ctx);
@@ -353,6 +366,7 @@ export default function planMode(pi: ExtensionAPI): void {
 
   pi.registerFlag("plan", { description: "Start in conversational plan mode", type: "boolean", default: false });
   pi.registerCommand("plan", { description: "Plan before implementation", handler: command });
+  pi.registerShortcut("ctrl+alt+p", { description: "Toggle plan mode", handler: toggle });
   pi.registerMessageRenderer(PLAN_MESSAGE, (message) => new Markdown(typeof message.content === "string" ? message.content : "", 0, 0, getMarkdownTheme()));
   pi.on("session_start", (_event, ctx) => {
     restore(ctx);

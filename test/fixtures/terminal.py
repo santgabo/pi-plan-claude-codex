@@ -1,6 +1,7 @@
 """Exercise Pi's actual terminal dialogs in a disposable PTY, with no network."""
 import codecs
 import fcntl
+import json
 import os
 from pathlib import Path
 import pty
@@ -22,7 +23,8 @@ arguments = ["pi"] if installed else [
     "--no-context-files", "--no-approve", "--no-session", "--tui-mode", mode,
     "--extension", str(Path(package) / "extensions/plan-mode/index.ts"),
     "--extension", str(Path(package) / "test/fixtures/provider.ts"),
-    "--provider", "plan-fixture", "--model", "local", "--plan",
+    "--provider", "plan-fixture", "--model", "local",
+    *([] if scenario == "shortcut" else ["--plan"]),
 ]
 process = subprocess.Popen(arguments, cwd=root, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
 os.close(slave)
@@ -44,13 +46,90 @@ def send(text):
     os.write(master, text.encode("utf-8"))
     time.sleep(0.03)
 
+def shortcut_scenario():
+    # Ctrl+Alt+P: legacy Meta+control byte, CSI-u, and xterm modifyOtherKeys.
+    sequences = ["\x1b\x10", "\x1b[112;7u", "\x1b[27;7;112~"]
+    enabled = scenario == "shortcut-plan"
+    wait_for("Plan mode" if enabled else "show full startup help")
+    probes = 0
+
+    def probe(submit=True):
+        nonlocal probes
+        offset = len(transcript)
+        if submit:
+            send("/fixture_probe draft-Ω\r")
+        else:
+            send("\r")
+        probes += 1
+        wait_for(f"SHORTCUT PROBE {probes}", offset)
+        data = json.loads((Path(root) / "shortcut-probe.json").read_text())
+        assert data["args"] == "draft-Ω", data  # No key bytes inserted or editor text lost.
+        return data
+
+    initial = probe()
+    normal_tools = initial["state"]["toolsBeforePlan"] if enabled else initial["tools"]
+    for sequence in sequences:
+        for _ in range(2):
+            send("/fixture_probe draft-Ω")
+            offset = len(transcript)
+            send(sequence)
+            enabled = not enabled
+            wait_for("Plan mode enabled." if enabled else "Plan mode disabled.", offset)
+            data = probe(submit=False)
+            assert data["state"]["enabled"] == enabled, data
+            assert data["requests"] == 0, data
+            if enabled:
+                assert "write" not in data["tools"] and "plan_submit" in data["tools"], data
+            else:
+                assert data["tools"] == normal_tools, data
+    if not enabled:
+        offset = len(transcript)
+        send(sequences[0])
+        wait_for("Plan mode enabled.", offset)
+    before = probe()
+    send("Plan a small implementation\r")
+    deadline = time.monotonic() + 10
+    while not (Path(root) / "shortcut-request.json").exists():
+        assert time.monotonic() < deadline, "The offline request did not start"
+        time.sleep(0.01)
+    request = json.loads((Path(root) / "shortcut-request.json").read_text())
+    assert request["userText"] == "Plan a small implementation", request
+    send("/fixture_probe draft-Ω")
+    offset = len(transcript)
+    send(sequences[1])
+    wait_for("Wait for the turn to finish before changing plan mode.", offset)
+    (Path(root) / "shortcut-release").touch()
+    wait_for("Execute in this conversation")
+    # Native review owns focus. The shortcut must not toggle behind the dialog.
+    send(sequences[2])
+    send("\x1b")
+    data = probe(submit=False)
+    assert data["requests"] == 1 and data["state"]["enabled"], data
+    assert data["tools"] == before["tools"], data
+    assert data["state"]["proposal"]["review"] == "held", data
+    proposal = data["state"]["proposal"]
+    for enabled in [False, True]:
+        offset = len(transcript)
+        send(sequences[0])
+        wait_for("Plan mode enabled." if enabled else "Plan mode disabled.", offset)
+        data = probe()
+        assert data["state"]["enabled"] == enabled, data
+        assert data["state"]["proposal"] == proposal, data
+        assert data["requests"] == 1, data
+        if not enabled:
+            assert data["tools"] == normal_tools, data
+    assert not (Path(root) / "implementation.txt").exists()
+
 try:
-    if installed:
+    if scenario.startswith("shortcut"):
+        shortcut_scenario()
+    elif installed:
         wait_for("show full startup help")
         assert "Plan mode" not in transcript
         send("/plan\r")
-    wait_for("Plan mode")
-    send("Plan a small implementation\r" if installed else "/plan Plan a small implementation\r")
+    if not scenario.startswith("shortcut"):
+        wait_for("Plan mode")
+        send("Plan a small implementation\r" if installed else "/plan Plan a small implementation\r")
     if scenario == "question":
         wait_for("Should we include a simplification improvement?")
         offset = len(transcript)
@@ -61,7 +140,7 @@ try:
         send("Yes, simplify without expanding the scope\r")
         wait_for("ANSWER RECEIVED")
         assert not (Path(root) / "implementation.txt").exists()
-    else:
+    elif not scenario.startswith("shortcut"):
         if scenario == "recovery":
             wait_for("Keep the revised scope small?")
             send("Yes\r")

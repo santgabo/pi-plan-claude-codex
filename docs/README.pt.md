@@ -26,9 +26,13 @@ Ative o modo na conversa:
 /plan
 ```
 
+Na TUI, o atalho fixo **Ctrl+Alt+P** (**Ctrl+Option+P** no macOS) também alterna o modo, tal como `/plan` sem argumentos. Preserva o rascunho do editor e a proposta atual, não envia pedidos ao modelo e **nunca aprova nem executa um plano**. Ao desativar, repõe as ferramentas anteriores. Durante um turno ativo, apenas mostra um aviso: não interrompe o trabalho nem agenda uma mudança posterior.
+
+No macOS, configure o terminal para transmitir Option como Alt/Meta, se necessário. Os diálogos nativos do Pi mantêm o foco do teclado; este não é um atalho global. Se o terminal, o sistema operativo ou outro atalho intercetar a combinação, use `/plan` como alternativa.
+
 Agora descreva o seu objetivo numa mensagem normal, por exemplo: “Quero adicionar pesquisa ao catálogo; investigue como funciona e sugira melhorias antes de decidir.”
 
-A instalação regista o pacote na configuração pessoal do Pi. É carregado automaticamente nos arranques seguintes, tornando o `/plan` disponível. Ative o modo com esse comando; não são necessários caminhos nem flags no arranque. `/plan <pedido>` também é suportado como atalho.
+A instalação regista o pacote na configuração pessoal do Pi. É carregado automaticamente nos arranques seguintes, tornando o `/plan` disponível. Ative o modo com esse comando ou com o atalho de teclado; não são necessários caminhos nem flags no arranque. `/plan <pedido>` também é suportado como atalho.
 
 Para instalar uma cópia local, incluindo antes da primeira publicação no npm, execute:
 
@@ -63,6 +67,7 @@ Cancelar a revisão mantém o modo ativo. Uma aprovação só vale para essa pro
 | Comando | Resultado |
 | --- | --- |
 | `/plan` | Alterna o modo de plano. |
+| Ctrl+Alt+P (macOS: Ctrl+Option+P) | Alterna como `/plan`, na TUI. |
 | `/plan <pedido>` | Ativa o modo e começa a planear esse pedido. |
 | `/plan on` | Ativa sem enviar um pedido ao modelo. |
 | `/plan off` | Desativa o modo e repõe as ferramentas anteriores. |
