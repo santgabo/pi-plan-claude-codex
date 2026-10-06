@@ -47,8 +47,8 @@ def send(text):
     time.sleep(0.03)
 
 def shortcut_scenario():
-    # Ctrl+Alt+P: legacy Meta+control byte, CSI-u, and xterm modifyOtherKeys.
-    sequences = ["\x1b\x10", "\x1b[112;7u", "\x1b[27;7;112~"]
+    # Ctrl+Q: conventional control byte, CSI-u, and xterm modifyOtherKeys.
+    sequences = ["\x11", "\x1b[113;5u", "\x1b[27;5;113~"]
     enabled = scenario == "shortcut-plan"
     wait_for("Plan mode" if enabled else "show full startup help")
     probes = 0
@@ -68,6 +68,13 @@ def shortcut_scenario():
 
     initial = probe()
     normal_tools = initial["state"]["toolsBeforePlan"] if enabled else initial["tools"]
+    # The removed shortcut must neither toggle nor disturb the editor draft.
+    for sequence in ["\x1b\x10", "\x1b[112;7u", "\x1b[27;7;112~"]:
+        send("/fixture_probe draft-Ω")
+        send(sequence)
+        data = probe(submit=False)
+        assert data["state"]["enabled"] == enabled, data
+        assert data["tools"] == initial["tools"] and data["requests"] == 0, data
     for sequence in sequences:
         for _ in range(2):
             send("/fixture_probe draft-Ω")

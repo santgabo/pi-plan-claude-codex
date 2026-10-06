@@ -366,7 +366,7 @@ export default function planMode(pi: ExtensionAPI): void {
 
   pi.registerFlag("plan", { description: "Start in conversational plan mode", type: "boolean", default: false });
   pi.registerCommand("plan", { description: "Plan before implementation", handler: command });
-  pi.registerShortcut("ctrl+alt+p", { description: "Toggle plan mode", handler: toggle });
+  pi.registerShortcut("ctrl+q", { description: "Toggle plan mode", handler: toggle });
   pi.registerMessageRenderer(PLAN_MESSAGE, (message) => new Markdown(typeof message.content === "string" ? message.content : "", 0, 0, getMarkdownTheme()));
   pi.on("session_start", (_event, ctx) => {
     restore(ctx);

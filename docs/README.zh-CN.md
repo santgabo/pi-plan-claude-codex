@@ -26,9 +26,9 @@ pi
 /plan
 ```
 
-在 TUI 中，也可以使用固定快捷键 **Ctrl+Alt+P**（macOS 上为 **Ctrl+Option+P**）切换模式，效果与不带参数的 `/plan` 相同。它保留编辑器草稿和当前提案，不向模型发送请求，且**绝不会批准或执行计划**。关闭模式会恢复之前的工具。在当前轮次仍在运行时，按下快捷键只会显示警告，不会中断工作，也不会安排稍后切换。
+在 macOS/Linux 的 TUI 中，也可以使用固定快捷键 **Ctrl+Q** 切换模式，效果与不带参数的 `/plan` 相同。它保留编辑器草稿和当前提案，不向模型发送请求，且**绝不会批准或执行计划**。关闭模式会恢复之前的工具。在当前轮次仍在运行时，按下快捷键只会显示警告，不会中断工作，也不会安排稍后切换。
 
-在 macOS 上，如有需要，请将终端配置为把 Option 作为 Alt/Meta 发送。Pi 的原生对话框保留键盘焦点；这不是全局快捷键。如果终端、操作系统或其他快捷键拦截了此组合，请改用 `/plan`。
+Ctrl+Q 使用 Control 而非 Command，在 macOS 上无需配置 Option/Meta。Pi 的原生对话框保留键盘焦点；这不是全局快捷键。如果终端、操作系统或其他快捷键拦截了此组合，请改用 `/plan`。在 Windows/WSL 上，Pi 将 Ctrl+Q 保留用于将后续消息加入队列，因此会跳过扩展的快捷键；请使用 `/plan`。
 
 现在用普通消息描述你的目标，例如：“我想添加目录搜索功能；请先调查其工作原理，并在做决定之前提出改进建议。”
 
@@ -67,7 +67,7 @@ pi install /absolute/path/to/pi-plan-claude-codex
 | 命令 | 结果 |
 | --- | --- |
 | `/plan` | 切换计划模式。 |
-| Ctrl+Alt+P（macOS：Ctrl+Option+P） | 在 TUI 中执行与 `/plan` 相同的切换。 |
+| Ctrl+Q（macOS/Linux） | 在 TUI 中执行与 `/plan` 相同的切换。 |
 | `/plan <request>` | 启用模式并开始规划该请求。 |
 | `/plan on` | 启用，但不向模型发送请求。 |
 | `/plan off` | 禁用模式并恢复之前的工具。 |
@@ -127,7 +127,7 @@ npm test
 npm pack --dry-run --ignore-scripts
 ```
 
-检查器复用 Pi 安装中的依赖。分发测试会打包本扩展，从本地 npm registry 提供 tarball，并在临时 profile 中运行 `pi install npm:pi-plan-claude-codex`。然后不带参数启动 `pi`，并在真实终端中激活 `/plan`。它们不会修改用户的个人配置，也不会下载第三方依赖。
+检查器复用 Pi 安装中的依赖。分发测试会打包本扩展，从本地 npm registry 提供 tarball，并在临时 profile 中运行 `pi install npm:pi-plan-claude-codex`。然后不带参数启动 `pi`，并在 PTY 中测试 `/plan` 和 Ctrl+Q。这些自动化测试验证已安装的软件包，而不是特定终端应用中的物理按键输入。它们不会修改用户的个人配置，也不会下载第三方依赖。
 
 `check` 需要 PATH 中有 `tsc`。可以指定 `PI_PLAN_HOST_ROOT`（Pi 软件包根目录）和 `PI_PLAN_TSC`（检查器可执行文件）。测试使用 Node 原生类型剥离，已用 Node `24.18.0` 验证。Unix 终端测试需要 Python 3，在 Windows 上跳过。
 
