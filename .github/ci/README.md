@@ -4,7 +4,7 @@ This private npm project installs the validation tools, not the extension. It is
 
 ## Reproducible installation
 
-- Pi and its internal packages are fixed to `1.0.1`; TypeScript is fixed to `5.9.3`.
+- Pi and its internal packages are fixed to `1.0.4`; TypeScript is fixed to `5.9.3`.
 - Pi's npm manifest uses caret ranges for its internal packages. Pinning only `pi-coding-agent` would still allow newer internal versions. The `overrides` keep this graph on the tested Pi release.
 - `package-lock.json` fixes the remaining dependency graph and tarball integrity hashes, including platform-specific optional dependencies needed on Linux.
 - The workflow runs `npm ci --ignore-scripts --no-audit --no-fund` from this directory. It does not execute dependency lifecycle scripts or install the extension's root peers.
