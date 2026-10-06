@@ -1,6 +1,6 @@
 {
   "name": "pi-plan-claude-codex",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Conversational plan mode with questions, review, and explicit execution for Pi",
   "repository": {
     "type": "git",
