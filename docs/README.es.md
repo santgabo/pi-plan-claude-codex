@@ -26,9 +26,13 @@ Dentro de la conversación, activa el modo:
 /plan
 ```
 
+En la TUI, el atajo fijo **Ctrl+Alt+P** (**Ctrl+Option+P** en macOS) también activa o desactiva el modo, igual que `/plan` sin argumentos. Conserva el borrador del editor y la propuesta actual, no envía peticiones al modelo y **nunca aprueba ni ejecuta un plan**. Al desactivar, restaura las herramientas anteriores. Durante un turno activo solo muestra una advertencia: no interrumpe el trabajo ni programa un cambio posterior.
+
+En macOS, configura el terminal para que transmita Option como Alt/Meta si es necesario. Los diálogos nativos de Pi conservan el foco del teclado; no es un atajo global. Si el terminal, el sistema operativo u otro atajo intercepta la combinación, usa `/plan` como alternativa.
+
 Ahora describe tu objetivo como un mensaje normal, por ejemplo: «Quiero agregar búsqueda al catálogo; investiga cómo funciona y propón mejoras antes de decidir».
 
-La instalación registra el paquete en la configuración personal de Pi. En los siguientes arranques se carga automáticamente y `/plan` queda disponible. El modo se activa con ese comando; el usuario no necesita pasar rutas ni flags al arrancar. También admite `/plan <petición>` como atajo.
+La instalación registra el paquete en la configuración personal de Pi. En los siguientes arranques se carga automáticamente y `/plan` queda disponible. El modo se activa con ese comando o con el atajo de teclado; el usuario no necesita pasar rutas ni flags al arrancar. También admite `/plan <petición>` como atajo.
 
 Para instalar el repositorio local, incluso antes de la primera publicación en npm, ejecuta:
 
@@ -65,6 +69,7 @@ No hay límite de rondas de refinamiento. Puedes continuar con mensajes normales
 | Comando | Resultado |
 | --- | --- |
 | `/plan` | Activa o desactiva el modo. |
+| Ctrl+Alt+P (macOS: Ctrl+Option+P) | Alterna igual que `/plan`, en la TUI. |
 | `/plan <petición>` | Activa el modo y empieza a planificar esa petición. |
 | `/plan on` | Activa sin enviar una petición al modelo. |
 | `/plan off` | Desactiva y restaura las herramientas previas. |

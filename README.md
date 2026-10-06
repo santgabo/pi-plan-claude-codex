@@ -26,9 +26,13 @@ Activate the mode in the conversation:
 /plan
 ```
 
+In the TUI, the fixed **Ctrl+Alt+P** shortcut (**Ctrl+Option+P** on macOS) also toggles the mode, just like `/plan` without arguments. It preserves the editor draft and current proposal, sends no model request, and **never approves or executes a plan**. Disabling restores the previous tools. During an active turn, it only shows a warning: it neither interrupts the work nor schedules a later toggle.
+
+On macOS, configure your terminal to send Option as Alt/Meta if needed. Native Pi dialogs retain keyboard focus; this is not a global shortcut. If your terminal, operating system, or another shortcut intercepts the combination, use `/plan` instead.
+
 Now describe your goal in a regular message, for example: “I want to add catalog search; investigate how it works and suggest improvements before deciding.”
 
-Installation registers the package in Pi's personal configuration. It loads automatically on subsequent launches, making `/plan` available. Activate the mode with that command; no paths or flags are needed at startup. `/plan <request>` is also supported as a shortcut.
+Installation registers the package in Pi's personal configuration. It loads automatically on subsequent launches, making `/plan` available. Activate the mode with that command or the keyboard shortcut; no paths or flags are needed at startup. `/plan <request>` is also supported as a shortcut.
 
 To install a local checkout, including before the first npm release, run:
 
@@ -65,6 +69,7 @@ There is no limit on refinement rounds. Continue with ordinary messages or the r
 | Command | Result |
 | --- | --- |
 | `/plan` | Toggle plan mode. |
+| Ctrl+Alt+P (macOS: Ctrl+Option+P) | Same toggle as `/plan`, in the TUI. |
 | `/plan <request>` | Enable the mode and start planning that request. |
 | `/plan on` | Enable without sending a request to the model. |
 | `/plan off` | Disable the mode and restore the previous tools. |
