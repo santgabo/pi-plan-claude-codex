@@ -4,7 +4,7 @@
 
 Extensão TypeScript que adiciona planeamento conversacional ao Pi-agent v1 or later: explorar um projeto, clarificar decisões, sugerir melhorias úteis e apresentar um plano antes da implementação. Pacote: `pi-plan-claude-codex`, versão `0.1.1`.
 
-O fluxo de trabalho inspira-se no [planeamento do Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) e na [revisão e aprovação de planos do Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). A implementação destina-se às APIs públicas de extensões do Pi-agent v1 or later; versões principais posteriores podem exigir uma revisão de compatibilidade.
+O fluxo de trabalho inspira-se no [planeamento do Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) e na [revisão e aprovação de planos do Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). A implementação destina-se às APIs públicas de extensões do Pi-agent v1 or later. Pi **1.0.4** é a versão de referência testada; isto não certifica todas as versões anteriores ou futuras.
 
 ## Instalar e usar
 
