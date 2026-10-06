@@ -1,4 +1,7 @@
 // Offline scripted provider. Not included in the package manifest or published files.
+import { existsSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { createAssistantMessageEventStream, getCurrentSystemPrompt, getCurrentTools, type AssistantMessage, type JsonObject, type TextContent, type ToolCall } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
@@ -20,6 +23,15 @@ The file must contain APPROVED. No external services are required.`;
 
 export default function fixtureProvider(pi: ExtensionAPI): void {
   let requests = 0;
+  let probes = 0;
+  pi.registerCommand("fixture_probe", {
+    description: "Record shortcut test observations without a model request",
+    handler: async (args, ctx) => {
+      const entry = [...ctx.sessionManager.getBranch()].reverse().find((item) => item.type === "custom" && item.customType === "pi-plan-claude-codex.state");
+      writeFileSync(join(ctx.cwd, "shortcut-probe.json"), JSON.stringify({ args, requests, tools: pi.getActiveTools(), state: entry?.type === "custom" ? entry.data : { enabled: false } }));
+      ctx.ui.notify(`SHORTCUT PROBE ${++probes}`, "info");
+    },
+  });
   pi.registerCommand("fixture_reload", {
     description: "Reload only the isolated test runtime",
     handler: async (_args, ctx) => { await ctx.reload(); },
@@ -84,7 +96,12 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
       } else {
         content = { type: "text", text: getCurrentSystemPrompt(context.messages).includes("PLAN MODE") ? FIXTURE_PLAN : "DONE" };
       }
-      queueMicrotask(() => {
+      queueMicrotask(async () => {
+        if (scenario.startsWith("shortcut") && count === 0) {
+          // The PTY driver releases this request only after testing the busy shortcut.
+          writeFileSync("shortcut-request.json", JSON.stringify({ userText }));
+          while (!existsSync("shortcut-release") && !options?.signal?.aborted) await delay(10);
+        }
         const message: AssistantMessage = {
           role: "assistant", api: model.api, provider: model.provider, model: model.id, content: [],
           usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
