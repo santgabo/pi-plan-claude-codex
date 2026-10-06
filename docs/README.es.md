@@ -4,7 +4,7 @@
 
 Extensión TypeScript que añade planificación conversacional a Pi-agent v1 or later: investigar el proyecto, aclarar decisiones, proponer mejoras útiles y presentar un plan antes de implementar. Paquete `pi-plan-claude-codex`, versión `0.1.1`.
 
-El workflow toma como referencia la [planificación de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) y la [revisión y aprobación de planes de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). La implementación está orientada a las APIs públicas de extensiones de Pi-agent v1 or later; las versiones mayores posteriores pueden requerir una revisión de compatibilidad.
+El workflow toma como referencia la [planificación de Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) y la [revisión y aprobación de planes de Claude Code](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). La implementación está orientada a las APIs públicas de extensiones de Pi-agent v1 or later. Pi **1.0.4** es la referencia comprobada; esto no certifica todas las versiones anteriores o futuras.
 
 ## Instalar y usar
 
@@ -42,10 +42,10 @@ Requiere Pi-agent v1 or later y Node.js `>=22.19.0`. Pi carga el TypeScript sin 
 
 ## Workflow
 
-1. **Investigar.** Lee las instrucciones del proyecto y explora su implementación. Busca primero los datos que pueda descubrir por sí mismo.
-2. **Conversar.** Aclara objetivo, alcance, restricciones y criterios de éxito. Propone mejoras de experiencia, simplicidad o comportamiento, explica sus consecuencias y pregunta si deben incluirse.
-3. **Cerrar decisiones.** Resuelve interfaces, enfoque, errores, compatibilidad y validación. La entrevista se adapta a la tarea: normalmente una decisión por pregunta, hasta tres relacionadas, sin número mínimo de rondas ni preguntas de relleno.
-4. **Revisar.** Presenta un plan Markdown completo con decisiones aceptadas, pasos verificables, pruebas y supuestos. El usuario elige qué hacer.
+1. **Investigar.** Lee las instrucciones del proyecto y el código relevante antes de preguntar por hechos descubribles. Utiliza solo herramientas disponibles y permitidas; detente cuando haya evidencia suficiente para la siguiente decisión e indica qué falta por verificar.
+2. **Conversar.** Aclara las incógnitas importantes sobre objetivo, alcance, restricciones y criterios de éxito. Ofrece mejoras materiales con sus consecuencias y pregunta si deben incluirse, sin inventar sugerencias para cumplir una cuota ni reabrir propuestas rechazadas sin nueva evidencia.
+3. **Cerrar decisiones.** Resuelve interfaces, enfoque, errores, compatibilidad y validación. Conserva las decisiones aceptadas e indica los supuestos menores sin convertirlos en bloqueos. Normalmente pregunta una decisión importante, hasta tres relacionadas; sin número mínimo de rondas ni preguntas de relleno.
+4. **Revisar y esperar.** Cuando no queden decisiones importantes pendientes, presenta un plan Markdown completo con decisiones aceptadas, pasos verificables, pruebas y supuestos. Una petición suficientemente definida puede ir directamente a revisión. En TUI/RPC, espera la elección del usuario sin repetir el plan completo en el chat.
 
 Las preguntas permiten opciones con consecuencias y recomendación, además de respuesta libre. Cancelarlas deja la decisión sin responder y detiene el turno. El modelo recibe instrucciones para conservar las decisiones previas y no ampliar el alcance sin aceptación. La calidad de la entrevista y la completitud del plan dependen también del modelo elegido.
 
@@ -104,7 +104,7 @@ Si falla la exportación, la propuesta permanece en la sesión, no se abre el se
 
 En TUI se usan los diálogos nativos y un indicador del modo. Se comprobaron `regular` y `fullscreen`, Unicode y resize a terminal estrecha.
 
-En RPC se usan las peticiones `extension_ui_request` nativas (`select` e `input`), widgets de texto y notificaciones. El cliente debe mostrar la propuesta y contestar los diálogos con `extension_ui_response`, o cancelarlos. No se infieren respuestas ni aprobaciones por timeout. La implementación comienza después de que se cierre el turno de planificación.
+En RPC se usan las peticiones `extension_ui_request` nativas (`select` e `input`), widgets de texto y notificaciones. El cliente debe mostrar la propuesta y contestar los diálogos con `extension_ui_response`, o cancelarlos. El comando RPC `abort` espera a que la sesión quede inactiva; cancela una revisión abierta después del turno con `extension_ui_response`, sin esperar a que `abort` la cierre. No se infieren respuestas ni aprobaciones por timeout. La implementación comienza después de que se cierre el turno de planificación.
 
 Print/text y JSON mantienen las restricciones, sin diálogos ni ejecución automática. Las preguntas pendientes se presentan en la respuesta final; si el plan está completo, se exporta y el modelo debe incluir su Markdown en la respuesta final. JSON/RPC mantienen stdout reservado al protocolo.
 
@@ -126,17 +126,17 @@ npm pack --dry-run --ignore-scripts
 
 El checker reutiliza las dependencias de la instalación de Pi. Las pruebas de distribución empaquetan esta extensión, sirven el tarball desde un registro npm local y ejecutan `pi install npm:pi-plan-claude-codex` en un perfil temporal. Después arrancan `pi` sin argumentos y activan `/plan` en terminal real. No modifican la configuración personal del usuario ni descargan dependencias de terceros.
 
-`check` necesita `tsc` en PATH. Puedes especificar `PI_PLAN_HOST_ROOT` (raíz del paquete de Pi) y `PI_PLAN_TSC` (ejecutable del checker). Los tests usan Node con eliminación nativa de tipos; se verificaron con Node `24.18.0`. Las pruebas de terminal Unix necesitan Python 3; se omiten en Windows.
+`check` necesita `tsc` en PATH. Puedes especificar `PI_PLAN_HOST_ROOT` (raíz del paquete de Pi) y `PI_PLAN_TSC` (ejecutable del checker). Las pruebas de integración lanzan `pi` desde PATH; utiliza la misma instalación para los tipos y los procesos. La validación local pasó con Pi `1.0.4`, TypeScript `5.9.3`, Node `24.18.0` y Python `3.14.7` en macOS. Los tests usan la eliminación nativa de tipos de Node. Las pruebas de terminal Unix necesitan Python 3; se omiten en Windows.
 
 La suite comprueba instalación y carga automática, política de herramientas, snapshots de ramas, exportaciones, errores y cancelación, aprobación en ambas sesiones, conservación de modelo/razonamiento, invalidación de diálogos, refinamiento, reload, aislamiento del historial, llamadas anidadas, modos sin UI y terminal real. Utiliza el runtime instalado de Pi con un proveedor determinista sin llamadas a modelos ni credenciales reales. Las fixtures no se incluyen en el paquete distribuible.
 
-Estas pruebas verifican los mecanismos y el protocolo. No constituyen una evaluación conversacional con un modelo real ni una validación de clientes RPC específicos.
+Estas pruebas verifican los mecanismos, los contratos del prompt y el protocolo, incluidas las instrucciones de planificación que recibe el proveedor y su retirada tras la aprobación. No constituyen una evaluación conversacional con un modelo real, una prueba de que cualquier modelo hará menos preguntas ni una validación de clientes RPC específicos. Los resultados locales no sustituyen una ejecución de GitHub Actions en Ubuntu con Python 3.12.
 
 ### Integración continua
 
 GitHub Actions ejecuta `npm run check`, toda la suite de `npm test` y `npm pack --dry-run --ignore-scripts` en pull requests, pushes a `main` y ejecuciones manuales. El job usa Ubuntu 24.04, Node `24.x` y Python `3.12`, e incluye ambos modos de terminal y las pruebas de instalación del paquete.
 
-Pi `1.0.1`, sus paquetes internos y TypeScript `5.9.3` se instalan desde un [proyecto privado de herramientas de CI](../.github/ci/README.md) separado, con un lockfile versionado. El workflow usa allí `npm ci --ignore-scripts`, sin instalar el paquete raíz, por lo que las `peerDependencies` del host se mantienen intactas. La instalación de dependencias requiere acceso al registro npm; las pruebas utilizan fixtures deterministas offline y un registro local de pruebas. La validación no utiliza credenciales de modelos.
+Pi `1.0.4`, sus paquetes internos y TypeScript `5.9.3` se instalan desde un [proyecto privado de herramientas de CI](../.github/ci/README.md) separado, con un lockfile versionado. El workflow usa allí `npm ci --ignore-scripts`, sin instalar el paquete raíz, por lo que las `peerDependencies` del host se mantienen intactas. La instalación de dependencias requiere acceso al registro npm; las pruebas utilizan fixtures deterministas offline y un registro local de pruebas. La validación no utiliza credenciales de modelos.
 
 ### Entrega continua
 

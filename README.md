@@ -4,7 +4,7 @@
 
 A TypeScript extension that adds conversational planning to Pi-agent v1 or later: explore a project, clarify decisions, suggest useful improvements, and present a plan before implementation. Package: `pi-plan-claude-codex`, version `0.1.1`.
 
-The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation targets the public extension APIs of Pi-agent v1 or later; later major releases may require a compatibility review.
+The workflow draws on [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) and [Claude Code plan review and approval](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan). The implementation targets the public extension APIs of Pi-agent v1 or later. Pi **1.0.4** is the tested reference; this does not certify every earlier or future release.
 
 ## Install and use
 
@@ -42,10 +42,10 @@ Requires Pi-agent v1 or later and Node.js `>=22.19.0`. Pi loads TypeScript direc
 
 ## Workflow
 
-1. **Investigate.** Read project instructions and explore the implementation. First look for facts the agent can discover on its own.
-2. **Discuss.** Clarify the goal, scope, constraints, and success criteria. Suggest useful UX, simplicity, or behavioral improvements, explain their tradeoffs, and ask whether to include them.
-3. **Resolve decisions.** Settle interfaces, approach, errors, compatibility, and validation. The interview adapts to the task: typically one decision per question, up to three related questions, with no minimum number of rounds or filler questions.
-4. **Review.** Present a complete Markdown plan with accepted decisions, verifiable steps, tests, and assumptions. The user chooses what to do.
+1. **Investigate.** Read project instructions and relevant code before asking about discoverable facts. Use only available, permitted tools; stop when there is enough evidence for the next decision and state any unverified evidence.
+2. **Discuss.** Clarify consequential unknowns about the goal, scope, constraints, and success criteria. Offer material improvements with tradeoffs and ask whether to include them, without inventing suggestions to meet a quota or reopening rejected ones without new evidence.
+3. **Resolve decisions.** Settle interfaces, approach, errors, compatibility, and validation. Preserve accepted decisions and state minor defaults without making them blockers. Usually ask one important question, up to three related ones; no minimum number of rounds or filler questions.
+4. **Review and wait.** When no consequential decisions remain, submit a complete Markdown plan with accepted decisions, verifiable steps, tests, and assumptions. A sufficiently defined request can go directly to review. In TUI/RPC, wait for the user's choice without repeating the full plan in chat.
 
 Questions can offer options with tradeoffs and a recommendation, as well as a free-form answer. Cancelling leaves the decision unanswered and stops the turn. The model is instructed to preserve prior decisions and not expand scope without approval. Interview quality and plan completeness also depend on the selected model.
 
@@ -104,7 +104,7 @@ If export fails, the proposal remains in the session, the execution selector is 
 
 The TUI uses native dialogs and a mode indicator. `regular` and `fullscreen`, Unicode, and resizing to a narrow terminal have been tested.
 
-RPC uses native `extension_ui_request` requests (`select` and `input`), text widgets, and notifications. The client must display the proposal and respond to dialogs with `extension_ui_response`, or cancel them. Responses and approvals are never inferred from a timeout. Implementation starts after the planning turn has ended.
+RPC uses native `extension_ui_request` requests (`select` and `input`), text widgets, and notifications. The client must display the proposal and respond to dialogs with `extension_ui_response`, or cancel them. RPC `abort` waits for idle; cancel an open post-turn review with `extension_ui_response` rather than waiting for `abort` to dismiss it. Responses and approvals are never inferred from a timeout. Implementation starts after the planning turn has ended.
 
 Print/text and JSON preserve the restrictions without dialogs or automatic execution. Pending questions are included in the final response; when the plan is complete, it is exported and the model must include its Markdown in the final response. JSON/RPC keep stdout reserved for the protocol.
 
@@ -126,17 +126,17 @@ npm pack --dry-run --ignore-scripts
 
 The checker reuses dependencies from the Pi installation. Distribution tests package the extension, serve the tarball from a local npm registry, and run `pi install npm:pi-plan-claude-codex` in a temporary profile. They then start `pi` without arguments and activate `/plan` in a real terminal. They do not modify the user's personal configuration or download third-party dependencies.
 
-`check` requires `tsc` on PATH. You can specify `PI_PLAN_HOST_ROOT` (the Pi package root) and `PI_PLAN_TSC` (the checker executable). Tests use Node's native type stripping and were verified with Node `24.18.0`. Unix terminal tests require Python 3 and are skipped on Windows.
+`check` requires `tsc` on PATH. You can specify `PI_PLAN_HOST_ROOT` (the Pi package root) and `PI_PLAN_TSC` (the checker executable). Integration tests launch `pi` from PATH; use the same installation for types and processes. Local validation passed with Pi `1.0.4`, TypeScript `5.9.3`, Node `24.18.0`, and Python `3.14.7` on macOS. Tests use Node's native type stripping. Unix terminal tests require Python 3 and are skipped on Windows.
 
 The suite checks installation and automatic loading, tool policy, branch snapshots, exports, errors and cancellation, approval in both sessions, model/reasoning preservation, dialog invalidation, refinement, reload, history isolation, nested calls, non-UI modes, and a real terminal. It uses the installed Pi runtime with a deterministic provider and no model calls or real credentials. Fixtures are not included in the distributable package.
 
-These tests verify mechanisms and protocol behavior. They are not a conversational evaluation with a real model or validation of specific RPC clients.
+These tests verify mechanisms, prompt contracts, and protocol behavior, including the provider-visible planning instructions and their removal after approval. They are not a conversational evaluation with a real model, proof that every model will ask fewer questions, or validation of specific RPC clients. Local results do not substitute for a GitHub Actions run on Ubuntu with Python 3.12.
 
 ### Continuous integration
 
 GitHub Actions runs `npm run check`, the complete `npm test` suite, and `npm pack --dry-run --ignore-scripts` for pull requests, pushes to `main`, and manual runs. The job uses Ubuntu 24.04, Node `24.x`, and Python `3.12`, including both terminal modes and package-installation tests.
 
-Pi `1.0.1`, its internal packages, and TypeScript `5.9.3` are installed from a separate private [CI tooling project](.github/ci/README.md) with a committed lockfile. The workflow uses `npm ci --ignore-scripts` there, not an installation of the root package, so host `peerDependencies` remain unchanged. Dependency installation needs npm registry access; the tests use deterministic offline fixtures and a local test registry. No model credentials are used during validation.
+Pi `1.0.4`, its internal packages, and TypeScript `5.9.3` are installed from a separate private [CI tooling project](.github/ci/README.md) with a committed lockfile. The workflow uses `npm ci --ignore-scripts` there, not an installation of the root package, so host `peerDependencies` remain unchanged. Dependency installation needs npm registry access; the tests use deterministic offline fixtures and a local test registry. No model credentials are used during validation.
 
 ### Continuous delivery
 

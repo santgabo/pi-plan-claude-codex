@@ -8,7 +8,7 @@
 
 ## Build, Test, and Development Commands
 
-Run commands from the repository root. Use installed Pi 1.0.1, `tsc`, and Node 24 for the tested development environment; Unix terminal tests require Python 3.
+Run commands from the repository root. Use installed Pi 1.0.4, TypeScript 5.9.3, and Node 24 for the tested development environment; Unix terminal tests require Python 3. CI uses Python 3.12.
 
 - `npm run check`: strict TypeScript validation against installed Pi declarations.
 - `npm test`: run all Node tests, including RPC, packaging, and terminal integration.
@@ -16,7 +16,7 @@ Run commands from the repository root. Use installed Pi 1.0.1, `tsc`, and Node 2
 - `npm pack --dry-run --ignore-scripts`: inspect distribution contents.
 - `pi install "$PWD"`, then `pi` and `/plan`: test local installation and normal activation.
 
-Pi loads TypeScript directly; no build step is configured. Set `PI_PLAN_HOST_ROOT` or `PI_PLAN_TSC` when automatic discovery fails.
+Pi loads TypeScript directly; no build step is configured. Set `PI_PLAN_HOST_ROOT` or `PI_PLAN_TSC` when automatic discovery fails. Keep `pi` on `PATH` aligned with `PI_PLAN_HOST_ROOT`: integration tests launch that executable. See `.github/ci/README.md` for the locked tool installation.
 
 ## Coding Style & Naming Conventions
 
