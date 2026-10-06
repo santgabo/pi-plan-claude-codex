@@ -4,7 +4,7 @@
 
 一个为 Pi-agent v1 or later 添加对话式规划能力的 TypeScript 扩展：探索项目、澄清决策、提出有用的改进建议，并在实施之前呈现计划。软件包：`pi-plan-claude-codex`，版本 `0.1.1`。
 
-工作流程借鉴了 [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 和 [Claude Code 计划评审与批准](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan)。实现面向 Pi-agent v1 or later 的公开扩展 API；后续主版本可能需要重新检查兼容性。
+工作流程借鉴了 [Codex planning](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 和 [Claude Code 计划评审与批准](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan)。实现面向 Pi-agent v1 or later 的公开扩展 API。Pi **1.0.4** 是已验证的基准版本；这并不保证所有早期或未来版本的兼容性。
 
 ## 安装与使用
 

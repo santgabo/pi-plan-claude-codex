@@ -1,7 +1,12 @@
 // Offline scripted provider. Not included in the package manifest or published files.
-import { createAssistantMessageEventStream, getCurrentSystemPrompt, getCurrentTools, type AssistantMessage, type JsonObject, type TextContent, type ToolCall } from "@earendil-works/pi-ai";
+import { createAssistantMessageEventStream, getCurrentSystemMessage, getCurrentSystemPrompt, getCurrentTools, type AssistantMessage, type JsonObject, type TextContent, type ToolCall, type UserMessage } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { RECOVER_WORKFLOW } from "../../extensions/plan-mode/prompt.ts";
+
+function userText(content: UserMessage["content"]): string {
+  return typeof content === "string" ? content : content.filter((item) => item.type === "text").map((item) => item.text).join("\n");
+}
 
 export const FIXTURE_PLAN = `# Example plan
 
@@ -47,18 +52,22 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
       const stream = createAssistantMessageEventStream();
       const count = requests++;
       const scenario = process.env.PI_PLAN_SCENARIO ?? "plan";
-      const latestUser = [...context.messages].reverse().find((message) => message.role === "user" && !JSON.stringify(message.content).includes("Plan mode is still active, but this turn"));
-      const userText = latestUser?.role === "user" ? (typeof latestUser.content === "string" ? latestUser.content : latestUser.content.filter((item) => item.type === "text").map((item) => item.text).join("\n")) : "";
+      pi.appendEntry("plan-fixture.request", {
+        sections: getCurrentSystemMessage(context.messages)?.sections,
+        tools: getCurrentTools(context.messages).map((tool) => tool.name),
+      });
+      const latestUser = [...context.messages].reverse().find((message) => message.role === "user" && userText(message.content).trim() !== RECOVER_WORKFLOW.trim());
+      const prompt = latestUser?.role === "user" ? userText(latestUser.content) : "";
       const tool = (name: string, args: JsonObject): ToolCall => ({ type: "toolCall", id: `fixture-${count}`, name, arguments: args });
       let content: TextContent | ToolCall;
-      if (userText.startsWith("Implement the explicitly approved plan")) {
+      if (prompt.startsWith("Implement the explicitly approved plan")) {
         const latestResult = [...context.messages].reverse().find((message) => message.role === "toolResult");
         content = latestResult?.role === "toolResult" && latestResult.toolName === "write"
           ? { type: "text", text: "IMPLEMENTED" }
           : tool("write", { path: "implementation.txt", content: "APPROVED\n" });
       } else if (scenario === "recovery") {
         const turnMessages = context.messages.slice((latestUser ? context.messages.lastIndexOf(latestUser) : -1) + 1);
-        const recovered = turnMessages.some((message) => message.role === "user" && JSON.stringify(message.content).includes("Plan mode is still active, but this turn"));
+        const recovered = turnMessages.some((message) => message.role === "user" && userText(message.content).trim() === RECOVER_WORKFLOW.trim());
         const answered = turnMessages.some((message) => message.role === "toolResult" && message.toolName === "plan_ask");
         const submitted = turnMessages.some((message) => message.role === "toolResult" && message.toolName === "plan_submit");
         if (submitted) content = { type: "text", text: "Plan ready for review." };
@@ -79,8 +88,8 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
         content = { type: "text", text: "ANSWER RECEIVED" };
       } else if (scenario === "inspect") {
         content = count === 0 ? tool("plan_inspect", { operation: "status" }) : { type: "text", text: "INSPECTED" };
-      } else if (count === 0 || userText.startsWith("Refine")) {
-        content = tool("plan_submit", { title: userText.startsWith("Refine") ? "Refined plan" : "Example plan", markdown: FIXTURE_PLAN + (userText.startsWith("Refine") ? "\n\nAccepted improvement: keep the scope small." : "") });
+      } else if (count === 0 || prompt.startsWith("Refine")) {
+        content = tool("plan_submit", { title: prompt.startsWith("Refine") ? "Refined plan" : "Example plan", markdown: FIXTURE_PLAN + (prompt.startsWith("Refine") ? "\n\nAccepted improvement: keep the scope small." : "") });
       } else {
         content = { type: "text", text: getCurrentSystemPrompt(context.messages).includes("PLAN MODE") ? FIXTURE_PLAN : "DONE" };
       }
@@ -90,10 +99,10 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
           usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
           stopReason: "stop", timestamp: Date.now(),
         };
-        if (options?.signal?.aborted) {
-          message.stopReason = "aborted";
-          message.errorMessage = "Fixture aborted";
-          stream.push({ type: "error", reason: "aborted", error: message });
+        if (options?.signal?.aborted || scenario === "aborted" || scenario === "error") {
+          message.stopReason = scenario === "error" ? "error" : "aborted";
+          message.errorMessage = scenario === "error" ? "Fixture provider failure" : "Fixture aborted";
+          stream.push({ type: "error", reason: message.stopReason, error: message });
           stream.end();
           return;
         }

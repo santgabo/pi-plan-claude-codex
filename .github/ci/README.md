@@ -4,7 +4,7 @@ This private npm project installs the validation tools, not the extension. It is
 
 ## Reproducible installation
 
-- Pi and its internal packages are fixed to `1.0.1`; TypeScript is fixed to `5.9.3`.
+- Pi and its internal packages are fixed to `1.0.4`; TypeScript is fixed to `5.9.3`.
 - Pi's npm manifest uses caret ranges for its internal packages. Pinning only `pi-coding-agent` would still allow newer internal versions. The `overrides` keep this graph on the tested Pi release.
 - `package-lock.json` fixes the remaining dependency graph and tarball integrity hashes, including platform-specific optional dependencies needed on Linux.
 - The workflow runs `npm ci --ignore-scripts --no-audit --no-fund` from this directory. It does not execute dependency lifecycle scripts or install the extension's root peers.
@@ -25,7 +25,17 @@ npm test
 npm pack --dry-run --ignore-scripts
 ```
 
-This verifies the same tool installation and validation commands locally; it does not replace a workflow run on Ubuntu in GitHub Actions.
+This verifies the same tool installation and validation commands locally; it does not replace a workflow run on Ubuntu in GitHub Actions. `PI_PLAN_HOST_ROOT` selects declarations and imports, while integration tests launch `pi` from `PATH`; both must point to this installation.
+
+## Pi 1.0.4 validation record
+
+The installed 1.0.4 documentation, examples, and exported declarations were checked before changing the prompt. The audit covered structured prompt sections, boundary continuation, tool termination and nested-call blocking, dialog cancellation, branch restoration, replacement-session contexts, and the offline provider's transcript API. No extension API adaptation was required. Relevant upstream references are [extension contracts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md), [session format](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/session-format.md), and [custom providers](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/custom-provider.md); these links track upstream, while the audit used the installed 1.0.4 files.
+
+The lockfile was regenerated with npm in a clean temporary directory using the existing lock as input, then installed with `npm ci --ignore-scripts --no-audit --no-fund`. All eight Pi package versions and internal dependency ranges match their 1.0.4 manifests. Non-Pi dependencies and Linux optional binaries were retained.
+
+Local validation on macOS arm64 used Pi `1.0.4`, TypeScript `5.9.3`, Node `24.18.0`, npm `11.16.0`, and Python `3.14.7`. Strict type checking, all 50 tests (none skipped), and the package dry run passed with the host and executable aligned. The tests use deterministic providers, disposable profiles, and a local package registry, not paid models or real credentials.
+
+Limitations: this is not a GitHub Actions execution, Linux runtime validation, a Python 3.12 run, or a real-model conversational evaluation. Windows terminal tests were not run. Prompt tests verify instructions and delivery, not guaranteed model compliance or fewer interview rounds. RPC clients must answer or cancel dialogs: `abort` waits for idle and does not by itself dismiss post-turn review. No approval, session-state format, peer range, Node requirement, package version, or CD behavior was changed.
 
 ## CI and CD boundaries
 

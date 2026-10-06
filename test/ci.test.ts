@@ -22,9 +22,9 @@ test("CI locks the complete Pi release in a private project without changing ext
   const extension = await manifest("../package.json");
   assert.equal(tools.private, true);
   assert.equal(tools.scripts, undefined);
-  assert.deepEqual(tools.dependencies, { "@earendil-works/pi-coding-agent": "1.0.1", typescript: "5.9.3" });
+  assert.deepEqual(tools.dependencies, { "@earendil-works/pi-coding-agent": "1.0.4", typescript: "5.9.3" });
   assert.ok(isRecord(tools.overrides));
-  assert.deepEqual(tools.overrides, Object.fromEntries(PI_PACKAGES.filter((name) => name !== "@earendil-works/pi-coding-agent").map((name) => [name, "1.0.1"])));
+  assert.deepEqual(tools.overrides, Object.fromEntries(PI_PACKAGES.filter((name) => name !== "@earendil-works/pi-coding-agent").map((name) => [name, "1.0.4"])));
   assert.equal(lock.lockfileVersion, 3);
   assert.ok(isRecord(lock.packages));
   const root = lock.packages[""];
@@ -33,7 +33,7 @@ test("CI locks the complete Pi release in a private project without changing ext
   for (const name of PI_PACKAGES) {
     const dependency: unknown = lock.packages[`node_modules/${name}`];
     assert.ok(isRecord(dependency), name);
-    assert.equal(dependency.version, "1.0.1", name);
+    assert.equal(dependency.version, "1.0.4", name);
   }
   for (const [path, dependency] of Object.entries(lock.packages)) {
     if (!path) continue;
@@ -43,7 +43,7 @@ test("CI locks the complete Pi release in a private project without changing ext
     assert.equal(typeof dependency.integrity, "string", path);
     if (typeof dependency.resolved === "string") assert.match(dependency.resolved, /^https:\/\/registry\.npmjs\.org\//);
     if (typeof dependency.integrity === "string") assert.match(dependency.integrity, /^sha512-/);
-    if (path.includes("node_modules/@earendil-works/")) assert.equal(dependency.version, "1.0.1", path);
+    if (path.includes("node_modules/@earendil-works/")) assert.equal(dependency.version, "1.0.4", path);
   }
   assert.ok(isRecord(extension.peerDependencies));
   for (const name of ["@earendil-works/pi-ai", "@earendil-works/pi-coding-agent", "@earendil-works/pi-tui", "typebox"]) {

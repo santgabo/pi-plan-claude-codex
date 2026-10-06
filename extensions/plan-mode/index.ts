@@ -378,7 +378,9 @@ export default function planMode(pi: ExtensionAPI): void {
       applyTools();
       event.systemPromptOptions.sections.plan_mode = WORKFLOW;
       if (state.proposal) event.systemPromptOptions.sections.plan_proposal = state.proposal.markdown;
-      event.systemPromptOptions.sections.plan_interaction = ctx.hasUI ? "Use plan_ask dialogs for consequential questions." : "No interactive UI is available. Ask unresolved questions in your final response and stop. Never approve or execute. When a plan is complete, submit it and include its full Markdown in your final response.";
+      event.systemPromptOptions.sections.plan_interaction = ctx.hasUI
+        ? "Dialogs are available. Use plan_ask for consequential questions and plan_submit for review. After submission, wait for the review choice without repeating the full plan in chat."
+        : "No dialogs are available; plan_ask is unavailable. Put pending questions in your final response and wait. When the plan is complete, call plan_submit and include its full Markdown in your final response. Never approve or execute automatically.";
     } else {
       delete event.systemPromptOptions.sections.plan_mode;
       delete event.systemPromptOptions.sections.plan_proposal;
