@@ -7,6 +7,7 @@ import test from "node:test";
 import type { RpcCommand, RpcExtensionUIResponse } from "@earendil-works/pi-coding-agent";
 import { isState } from "../extensions/plan-mode/state.ts";
 import { WORKFLOW } from "../extensions/plan-mode/prompt.ts";
+import { FIXTURE_PLAN } from "./fixtures/provider.ts";
 
 interface RecordMessage {
   type: string;
@@ -37,6 +38,12 @@ function snapshot(record: RecordMessage) {
   const last = [...entries].reverse().find((entry: unknown) => isObject(entry) && entry.customType === "pi-plan-claude-codex.state");
   assert.ok(isObject(last) && isState(last.data));
   return last.data;
+}
+
+function assertNoRecovery(record: RecordMessage): void {
+  const entries = data(record).entries;
+  assert.ok(Array.isArray(entries));
+  assert.ok(!entries.some((entry: unknown) => isObject(entry) && entry.customType === "pi-plan-claude-codex.recover"));
 }
 
 function providerRequests(record: RecordMessage): Record<string, unknown>[] {
@@ -170,6 +177,9 @@ test("RPC presents a saved plan and cancellation preserves read-only mode", asyn
     await assert.rejects(readFile(join(client.root, "implementation.txt")));
     client.answer(dialog);
     await client.wait((record) => record.type === "agent_settled");
+    const entries = await client.response({ type: "get_entries" });
+    assertNoRecovery(entries);
+    assert.equal(providerRequests(entries).length, 1, "dismissed review must not trigger another provider request");
     const plans = await readdir(join(client.root, ".pi/plans"));
     assert.equal(plans.length, 1);
     assert.match(await readFile(join(client.root, ".pi/plans", plans[0]), "utf8"), /## Decisions/);
@@ -245,6 +255,9 @@ test("RPC questions support a custom answer and cancellation without a proposal"
     await assert.rejects(readdir(join(client.root, ".pi/plans")));
     const messages = await client.response({ type: "get_messages" });
     assert.match(JSON.stringify(messages.data), /cancelled/);
+    const entries = await client.response({ type: "get_entries" });
+    assertNoRecovery(entries);
+    assert.equal(providerRequests(entries).length, 1, "cancelled question must stop the turn");
   });
 });
 
@@ -330,7 +343,12 @@ for (const mode of ["text", "json"]) {
           assert.equal(requests.length, scenario === "plan" ? 2 : 1, "no headless recovery");
           for (const request of requests) assertPlanningRequest(request, false);
           assert.doesNotMatch(output, /extension_ui_request/);
-        }
+          if (scenario === "plan") {
+            const final = records.findLast((record) => isObject(record) && record.type === "message_end" && isObject(record.message) && record.message.role === "assistant");
+            assert.ok(isObject(final) && isObject(final.message) && Array.isArray(final.message.content));
+            assert.ok(final.message.content.some((item: unknown) => isObject(item) && item.type === "text" && item.text === FIXTURE_PLAN), "the full plan must reach the final assistant response, not just tool output");
+          }
+        } else if (scenario === "plan") assert.equal(output.trim(), FIXTURE_PLAN);
         await assert.rejects(readFile(join(root, "implementation.txt")));
       } finally { await rm(root, { recursive: true, force: true }); }
     }
@@ -357,6 +375,10 @@ test("RPC refinement creates a new proposal and preserves previous Markdown", as
     client.answer(input, "Improve simplicity");
     const revised = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select", offset);
     assert.match(revised.title ?? "", /Review 2/);
+    const requests = providerRequests(await client.response({ type: "get_entries" }));
+    const request = requests.at(-1);
+    assert.ok(request);
+    assertPlanningRequest(request, true);
     client.answer(revised, "Continue planning");
     await client.wait((record) => record.type === "agent_settled", offset);
     assert.equal((await readdir(join(client.root, ".pi/plans"))).length, 2);
@@ -368,7 +390,10 @@ test("a failed Markdown export keeps the session proposal and review can retry",
     await writeFile(join(client.root, ".pi"), "Obstruction used only by this test");
     await client.response({ type: "prompt", message: "Plan this" });
     await client.wait((record) => record.type === "agent_settled");
-    const failed = snapshot(await client.response({ type: "get_entries" }));
+    const entries = await client.response({ type: "get_entries" });
+    assertNoRecovery(entries);
+    assert.equal(providerRequests(entries).length, 2, "failed export permits its normal tool follow-up, not recovery");
+    const failed = snapshot(entries);
     assert.equal(failed.proposal?.review, "held");
     assert.equal(failed.proposal?.file, undefined);
     assert.match(failed.proposal?.markdown ?? "", /## Decisions/);
@@ -489,6 +514,73 @@ test("cancelling a recovered question stops without another retry or implicit ap
     client.answer(review);
     await client.wait((record) => record.type === "agent_settled", offset);
     assert.equal(snapshot(await client.response({ type: "get_entries" })).enabled, true);
+    await assert.rejects(readFile(join(client.root, "implementation.txt")));
+  });
+});
+
+for (const scenario of ["aborted", "error"]) {
+  test(`a provider ${scenario} outcome does not recover, submit, or approve`, async () => {
+    await fixture(scenario, async (client) => {
+      await client.response({ type: "set_auto_retry", enabled: false });
+      await client.response({ type: "prompt", message: "Plan this" });
+      await client.wait((record) => record.type === "agent_settled");
+      const entries = await client.response({ type: "get_entries" });
+      assertNoRecovery(entries);
+      assert.equal(providerRequests(entries).length, 1);
+      assert.equal(snapshot(entries).enabled, true);
+      assert.equal(snapshot(entries).proposal, undefined);
+      const messages = await client.response({ type: "get_messages" });
+      assert.match(JSON.stringify(messages.data), new RegExp(`"stopReason":"${scenario}"`));
+      assert.ok(!client.records.some((record) => record.type === "tool_execution_start"));
+      await assert.rejects(readdir(join(client.root, ".pi/plans")));
+      await assert.rejects(readFile(join(client.root, "implementation.txt")));
+    });
+  });
+}
+
+for (const scenario of ["question", "plan"]) {
+  test(`RPC abort with ${scenario} dialog cancellation prevents recovery and late approval`, async () => {
+    await fixture(scenario, async (client) => {
+      await client.response({ type: "prompt", message: "Plan this" });
+      const dialog = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select");
+      // RPC abort waits for idle; post-run review also needs its UI cancellation response.
+      const abort = client.response({ type: "abort" });
+      client.answer(dialog);
+      await abort;
+      client.answer(dialog, "Execute in this conversation");
+      await client.wait((record) => record.type === "agent_settled");
+      const entries = await client.response({ type: "get_entries" });
+      assertNoRecovery(entries);
+      assert.equal(providerRequests(entries).length, 1);
+      assert.equal(snapshot(entries).enabled, true);
+      assert.notEqual(snapshot(entries).proposal?.review, "approved");
+      await assert.rejects(readFile(join(client.root, "implementation.txt")));
+    });
+  });
+}
+
+test("RPC command activation and ordinary refinement preserve planning instructions, not prose approval", async () => {
+  await fixture("plan", async (client) => {
+    await client.response({ type: "prompt", message: "/plan off" });
+    await client.response({ type: "prompt", message: "/plan" });
+    await client.response({ type: "prompt", message: "Implement it" });
+    const first = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select");
+    const entries = await client.response({ type: "get_entries" });
+    assertPlanningRequest(providerRequests(entries)[0], true);
+    assert.equal(snapshot(entries).enabled, true);
+    client.answer(first, "Continue planning");
+    await client.wait((record) => record.type === "agent_settled");
+    const offset = client.records.length;
+    await client.response({ type: "prompt", message: "Refine validation without changing the accepted scope" });
+    const revised = await client.wait((record) => record.type === "extension_ui_request" && record.method === "select", offset);
+    assert.match(revised.title ?? "", /Review 2/);
+    const request = providerRequests(await client.response({ type: "get_entries" })).at(-1);
+    assert.ok(request);
+    assertPlanningRequest(request, true);
+    assert.ok(isObject(request.sections) && typeof request.sections.plan_proposal === "string");
+    assert.ok(request.sections.plan_proposal.includes(FIXTURE_PLAN));
+    client.answer(revised);
+    await client.wait((record) => record.type === "agent_settled", offset);
     await assert.rejects(readFile(join(client.root, "implementation.txt")));
   });
 });

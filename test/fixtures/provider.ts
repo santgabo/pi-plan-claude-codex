@@ -99,10 +99,10 @@ export default function fixtureProvider(pi: ExtensionAPI): void {
           usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
           stopReason: "stop", timestamp: Date.now(),
         };
-        if (options?.signal?.aborted) {
-          message.stopReason = "aborted";
-          message.errorMessage = "Fixture aborted";
-          stream.push({ type: "error", reason: "aborted", error: message });
+        if (options?.signal?.aborted || scenario === "aborted" || scenario === "error") {
+          message.stopReason = scenario === "error" ? "error" : "aborted";
+          message.errorMessage = scenario === "error" ? "Fixture provider failure" : "Fixture aborted";
+          stream.push({ type: "error", reason: message.stopReason, error: message });
           stream.end();
           return;
         }
